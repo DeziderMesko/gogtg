@@ -28,7 +28,7 @@ from gtg.overview import (
 )
 
 TZ = ZoneInfo("Europe/Prague")
-TODAY = date(2026, 5, 13)
+TODAY = date.today()
 
 
 def make_config() -> Config:
@@ -207,17 +207,15 @@ def test_build_month_rows_length(tmp_path: Path) -> None:
     state = make_state()
     config = make_config()
     rows = build_month_rows(state, config, TZ, tmp_path)
-    days_in_may = calendar.monthrange(2026, 5)[1]
-    assert len(rows) == days_in_may
+    assert len(rows) == calendar.monthrange(TODAY.year, TODAY.month)[1]
 
 
 def test_build_month_rows_today_is_medium(tmp_path: Path) -> None:
+    t = datetime.combine(TODAY, time(10, 0), tzinfo=TZ)
     plan = DayPlan(
-        date="2026-05-13",
+        date=TODAY.isoformat(),
         day_type=DayType.MEDIUM,
-        sets=[
-            PlannedSet(index=1, total=1, scheduled_at=datetime(2026, 5, 13, 10, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-        ],
+        sets=[PlannedSet(index=1, total=1, scheduled_at=t, reps={"oap": 3, "ols": 2, "pullup": 1})],
     )
     state = make_state(plan=plan)
     rows = build_month_rows(state, make_config(), TZ, tmp_path)
@@ -242,37 +240,35 @@ def test_render_html_contains_legend() -> None:
 
 
 def test_render_html_today_row_is_bold(tmp_path: Path) -> None:
+    t = datetime.combine(TODAY, time(9, 0), tzinfo=TZ)
     plan = DayPlan(
-        date="2026-05-13",
+        date=TODAY.isoformat(),
         day_type=DayType.MEDIUM,
-        sets=[
-            PlannedSet(index=1, total=1, scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-        ],
+        sets=[PlannedSet(index=1, total=1, scheduled_at=t, reps={"oap": 3, "ols": 2, "pullup": 1})],
     )
     state = make_state(plan=plan)
     rows = build_month_rows(state, make_config(), TZ, tmp_path)
-    html = render_html(rows, 2026, 5)
-    assert 'class="today"' in html
+    html = render_html(rows, TODAY.year, TODAY.month)
+    assert 'class="today"' in html or '<tr class="today"' in html
 
 
 def test_render_html_rest_day_shows_dash(tmp_path: Path) -> None:
     state = make_state(plan=None)
     rows = build_month_rows(state, make_config(), TZ, tmp_path)
-    html = render_html(rows, 2026, 5)
+    html = render_html(rows, TODAY.year, TODAY.month)
     assert "Rest" in html
     assert "—" in html
 
 
 def test_render_html_reps_label_in_output(tmp_path: Path) -> None:
+    t = datetime.combine(TODAY, time(9, 0), tzinfo=TZ)
     plan = DayPlan(
-        date="2026-05-13",
+        date=TODAY.isoformat(),
         day_type=DayType.MEDIUM,
-        sets=[
-            PlannedSet(index=1, total=1, scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-        ],
+        sets=[PlannedSet(index=1, total=1, scheduled_at=t, reps={"oap": 3, "ols": 2, "pullup": 1})],
     )
     state = make_state(plan=plan)
     rows = build_month_rows(state, make_config(), TZ, tmp_path)
-    html = render_html(rows, 2026, 5)
+    html = render_html(rows, TODAY.year, TODAY.month)
     assert "3/2/1" in html
     assert 'class="reps"' in html

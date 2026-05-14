@@ -170,8 +170,9 @@ def _square(s: SetStatus) -> str:
 
 
 def _row_html(row: DayRow, is_today: bool) -> str:
-    date_label = f"{_CZ_DAY[row.date.weekday()]} {row.date.day}.&nbsp;{row.date.month}."
-    date_cls = ' class="today"' if is_today else ""
+    day_abbrev = _CZ_DAY[row.date.weekday()]
+    day_num = f"{row.date.day}.&nbsp;{row.date.month}."
+    bold = ' class="today"' if is_today else ""
 
     if row.day_type is None:
         type_cell = ""
@@ -188,8 +189,9 @@ def _row_html(row: DayRow, is_today: bool) -> str:
         reps_cell = f'<span class="reps" title="{row.reps_tooltip}">{row.reps_label}</span>'
 
     return (
-        f'  <tr>\n'
-        f'    <td{date_cls}>{date_label}</td>\n'
+        f'  <tr{bold}>\n'
+        f'    <td class="dow">{day_abbrev}</td>\n'
+        f'    <td class="dnum">{day_num}</td>\n'
         f'    <td>{type_cell}</td>\n'
         f'    <td class="squares">{sets_cell}</td>\n'
         f'    <td>{reps_cell}</td>\n'
@@ -202,7 +204,9 @@ _CSS = """
   h1{font-size:1.2rem;margin-bottom:1rem}
   table{border-collapse:collapse}
   td{padding:.15rem .55rem;vertical-align:middle;white-space:nowrap}
-  td.today{font-weight:bold}
+  tr.today td{font-weight:bold}
+  td.dow{color:#888;min-width:2rem}
+  td.dnum{text-align:right;font-variant-numeric:tabular-nums;min-width:3.5rem}
   .dtype{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
   .dtype.light{color:#999}
   .dtype.medium{color:#666}

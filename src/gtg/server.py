@@ -5,6 +5,7 @@ from typing import Callable
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import HTMLResponse
 
 from gtg.models import CompletedSet, Config, DayPlan
 from gtg.notifier import Notifier
@@ -93,5 +94,11 @@ def create_app(ctx: AppContext) -> FastAPI:
         _regenerate_overview(ctx)
 
         return {"status": "ok"}
+
+    @app.get("/overview", response_class=HTMLResponse)
+    def overview():
+        if ctx.overview_path is None or not ctx.overview_path.exists():
+            raise HTTPException(404, "Overview not generated yet")
+        return ctx.overview_path.read_text(encoding="utf-8")
 
     return app

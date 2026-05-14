@@ -188,6 +188,10 @@ def main() -> None:
     )
     gtg.start()
 
+    overview_path = data_dir / "overview.html"
+    from gtg.overview import generate as generate_overview
+    generate_overview(state_path, data_dir, overview_path, config, tz)
+
     ctx = AppContext(
         config=config,
         state_path=state_path,
@@ -196,7 +200,7 @@ def main() -> None:
         notifier=notifier,
         reschedule_fn=gtg.reschedule,
         cancel_today_fn=gtg.cancel_today,
-        overview_path=data_dir / "overview.html",
+        overview_path=overview_path,
     )
     app = create_app(ctx)
 

@@ -22,8 +22,8 @@ from gtg.scheduler import GTGScheduler, _SET_JOB_PREFIX
 from gtg.storage import save_state
 
 TZ = ZoneInfo("Europe/Prague")
-TODAY = date(2026, 5, 13)
-TODAY_STR = "2026-05-13"
+TODAY = date.today()
+TODAY_STR = TODAY.isoformat()
 
 
 def make_config() -> Config:
