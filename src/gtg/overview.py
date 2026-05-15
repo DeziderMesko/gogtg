@@ -210,8 +210,12 @@ def build_month_rows(
 
 
 def _square(s: SetStatus) -> str:
-    char = "■" if s.done else "□"
-    cls = "sq next" if s.next_notify else "sq"
+    if s.done:
+        char, cls = "■", "sq"
+    elif s.next_notify:
+        char, cls = "■", "sq next"
+    else:
+        char, cls = "□", "sq"
     return f'<span class="{cls}" title="{s.tooltip}">{char}</span>'
 
 
@@ -259,7 +263,7 @@ _CSS = """
   .dtype.rest{color:#bbb}
   .squares{letter-spacing:.2em}
   .sq{cursor:default}
-  .sq.next{color:#1a7a1a;font-weight:bold}
+  .sq.next{color:#aaa}
   .dash{color:#ccc}
   .reps{font-variant-numeric:tabular-nums;cursor:help;color:#555}
   .legend{margin-top:1.5rem;color:#999}
