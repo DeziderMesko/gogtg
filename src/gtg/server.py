@@ -101,7 +101,7 @@ def create_app(ctx: AppContext) -> FastAPI:
             raise HTTPException(404, "Overview not generated yet")
         return ctx.overview_path.read_text(encoding="utf-8")
 
-    @app.post("/ntfytest")
+    @app.get("/ntfytest")
     def ntfytest():
         state = load_state(ctx.state_path, ctx.tz)
         if state is None or state.today_plan is None or not state.today_plan.sets:
