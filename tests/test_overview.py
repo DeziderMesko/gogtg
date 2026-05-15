@@ -278,12 +278,12 @@ def test_build_month_rows_today_is_medium(tmp_path: Path) -> None:
 
 def test_render_html_contains_month_title() -> None:
     rows: list[DayRow] = []
-    html = render_html(rows, 2026, 5)
+    html = render_html(rows, 2026, 5, [15, 30, 60])
     assert "Květen 2026" in html
 
 
 def test_render_html_contains_legend() -> None:
-    html = render_html([], 2026, 5)
+    html = render_html([], 2026, 5, [15, 30, 60])
     assert "Splněno" in html
     assert "□" in html
     assert "■" in html
@@ -298,14 +298,14 @@ def test_render_html_today_row_is_bold(tmp_path: Path) -> None:
     )
     state = make_state(plan=plan)
     rows = build_month_rows(state, make_config(), TZ, tmp_path)
-    html = render_html(rows, TODAY.year, TODAY.month)
+    html = render_html(rows, TODAY.year, TODAY.month, [15, 30, 60])
     assert 'class="today"' in html or '<tr class="today"' in html
 
 
 def test_render_html_rest_day_shows_dash(tmp_path: Path) -> None:
     state = make_state(plan=None)
     rows = build_month_rows(state, make_config(), TZ, tmp_path)
-    html = render_html(rows, TODAY.year, TODAY.month)
+    html = render_html(rows, TODAY.year, TODAY.month, [15, 30, 60])
     assert "Rest" in html
     assert "—" in html
 
@@ -319,6 +319,6 @@ def test_render_html_reps_label_in_output(tmp_path: Path) -> None:
     )
     state = make_state(plan=plan)
     rows = build_month_rows(state, make_config(), TZ, tmp_path)
-    html = render_html(rows, TODAY.year, TODAY.month)
+    html = render_html(rows, TODAY.year, TODAY.month, [15, 30, 60])
     assert "3/2/1" in html
     assert 'class="reps"' in html

@@ -36,6 +36,7 @@ class DayRow:
     sets: list[SetStatus] = field(default_factory=list)
     reps_label: str = ""
     reps_tooltip: str = ""
+    next_set_index: int | None = None
 
 
 # ── Čistá logika ───────────────────────────────────────────────────────────────
@@ -125,6 +126,7 @@ def _day_today(
         sets=sets,
         reps_label=_reps_label(reps, ex_ids),
         reps_tooltip=_reps_tooltip(config),
+        next_set_index=next_idx,
     )
 
 
@@ -219,7 +221,22 @@ def _square(s: SetStatus) -> str:
     return f'<span class="{cls}" title="{s.tooltip}">{char}</span>'
 
 
-def _row_html(row: DayRow, is_today: bool) -> str:
+def _actions_cell(row: DayRow, snooze_options: list[int]) -> str:
+    def btn(label: str, url: str, enabled: bool = True) -> str:
+        if enabled:
+            js = f"fetch('{url}',{{method:'POST'}}).then(()=>location.reload())"
+            return f'<button class="act" onclick="{js}">{label}</button>'
+        return f'<button class="act" disabled>{label}</button>'
+
+    si = row.next_set_index
+    parts = [btn("Potvrdit", "/callback/done")]
+    for m in snooze_options:
+        parts.append(btn(f"Snooze {m}", f"/callback/snooze?set={si}&minutes={m}", si is not None))
+    parts.append(btn("Skip day", "/callback/skip"))
+    return '<td class="actions">' + " ".join(parts) + "</td>"
+
+
+def _row_html(row: DayRow, is_today: bool, snooze_options: list[int]) -> str:
     day_abbrev = _CZ_DAY[row.date.weekday()]
     day_num = f"{row.date.day}.&nbsp;{row.date.month}."
     bold = ' class="today"' if is_today else ""
@@ -238,6 +255,8 @@ def _row_html(row: DayRow, is_today: bool) -> str:
         sets_cell = " ".join(_square(s) for s in row.sets)
         reps_cell = f'<span class="reps" title="{row.reps_tooltip}">{row.reps_label}</span>'
 
+    actions_cell = _actions_cell(row, snooze_options) if is_today else "<td></td>"
+
     return (
         f'  <tr{bold}>\n'
         f'    <td class="dow">{day_abbrev}</td>\n'
@@ -245,12 +264,13 @@ def _row_html(row: DayRow, is_today: bool) -> str:
         f'    <td>{type_cell}</td>\n'
         f'    <td class="squares">{sets_cell}</td>\n'
         f'    <td>{reps_cell}</td>\n'
+        f'    {actions_cell}\n'
         f'  </tr>'
     )
 
 
 _CSS = """
-  body{font-family:sans-serif;font-size:.9rem;padding:1rem 2rem;background:#fff;color:#111;max-width:600px}
+  body{font-family:sans-serif;font-size:.9rem;padding:1rem 2rem;background:#fff;color:#111;max-width:700px}
   h1{font-size:.9rem;font-weight:bold;margin-bottom:1rem}
   table{border-collapse:collapse}
   td{padding:.15rem .55rem;vertical-align:middle;white-space:nowrap;font-size:.9rem}
@@ -266,14 +286,19 @@ _CSS = """
   .sq.next{color:#aaa}
   .dash{color:#ccc}
   .reps{font-variant-numeric:tabular-nums;cursor:help;color:#555}
+  .actions{padding-left:.8rem}
+  .act{font-size:.8rem;padding:.1rem .4rem;margin-right:.2rem;cursor:pointer;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#333}
+  .act:hover:not(:disabled){background:#e8e8e8}
+  .act:disabled{color:#bbb;cursor:default}
   .legend{margin-top:1.5rem;color:#999}
   .legend span{margin-right:1rem}
 """.strip()
 
 
-def render_html(rows: list[DayRow], year: int, month: int) -> str:
+def render_html(rows: list[DayRow], year: int, month: int, snooze_options: list[int]) -> str:
     title = f"{_CZ_MONTH[month]} {year}"
-    rows_html = "\n".join(_row_html(r, r.date == date.today()) for r in rows)
+    today = date.today()
+    rows_html = "\n".join(_row_html(r, r.date == today, snooze_options) for r in rows)
     return (
         f'<!DOCTYPE html>\n<html lang="cs">\n<head>\n'
         f'<meta charset="UTF-8">\n<title>GTG — {title}</title>\n'
@@ -296,5 +321,5 @@ def generate(
         return
     today = date.today()
     rows = build_month_rows(state, config, tz, data_dir)
-    html = render_html(rows, today.year, today.month)
+    html = render_html(rows, today.year, today.month, config.snooze_options_minutes)
     output_path.write_text(html, encoding="utf-8")
