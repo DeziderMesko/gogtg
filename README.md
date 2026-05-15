@@ -14,14 +14,14 @@ v JSON souborech. Plná specifikace v [`docs/spec.md`](docs/spec.md).
 - Python 3.11+
 - [`uv`](https://github.com/astral-sh/uv) (doporučeno) nebo `pip`
 - Účet na ntfy.sh (nebo vlastní ntfy instance)
-- Tunel pro callback notifikací — [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) nebo ngrok
+- [ngrok](https://ngrok.com) pro callback notifikací
 
 ---
 
 ## Instalace
 
 ```bash
-git clone ...
+git clone https://github.com/DeziderMesko/gogtg.git
 cd gogtg
 uv sync
 ```
@@ -106,26 +106,10 @@ Před prvním spuštěním vytvoř `data/state.json` se svými aktuálními maxi
 uv run python -m gtg.scheduler
 ```
 
-### S Cloudflare Tunnel
+### Na Raspberry Pi (ngrok)
 
-```bash
-# V jednom terminálu spusť tunel (jednorázové nastavení viz CF docs)
-cloudflared tunnel run gtg
-
-# V druhém terminálu spusť aplikaci
-GTG_CALLBACK_URL=https://gtg.tvoje-domena.com uv run python -m gtg.scheduler
-```
-
-### Jako Windows Scheduled Task (při přihlášení)
-
-```
-Program: C:\Users\...\uv.exe
-Arguments: run python -m gtg.scheduler
-Start in: C:\cesta\k\gogtg
-```
-
-Env proměnné nastav v System Properties → Environment Variables nebo přímo
-v XML definici tasku.
+Viz [`scripts/README.md`](scripts/README.md) — skripty pro jednorázovou instalaci,
+spuštění s ngrok a aktualizaci přes `git pull`.
 
 ---
 
