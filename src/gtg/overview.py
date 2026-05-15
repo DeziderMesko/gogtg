@@ -259,7 +259,7 @@ _CSS = """
   .dtype.rest{color:#bbb}
   .squares{letter-spacing:.2em}
   .sq{cursor:default}
-  .sq.next{color:#1a7a1a;font-weight:bold;outline:2px solid #1a7a1a;outline-offset:2px;border-radius:2px}
+  .sq.next{color:#1a7a1a;font-weight:bold}
   .dash{color:#ccc}
   .reps{font-variant-numeric:tabular-nums;cursor:help;color:#555}
   .legend{margin-top:1.5rem;color:#999}
