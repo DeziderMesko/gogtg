@@ -25,7 +25,7 @@ class Notifier:
         base = self.callback_base_url.rstrip("/")
         idx = planned_set.index
         actions: list[str] = [
-            f"http, ✅ Hotovo, {base}/callback/done?set={idx}, method=POST, clear=true",
+            f"http, ✅ Hotovo, {base}/callback/done, method=POST, clear=true",
         ]
         for minutes in self.config.snooze_options_minutes:
             actions.append(

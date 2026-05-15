@@ -8,9 +8,11 @@ from gtg.models import (
     AppState,
     Config,
     CyclePosition,
+    DayPlan,
     DayType,
     Exercise,
     MaxReps,
+    PlannedSet,
     WindowConfig,
 )
 from gtg.scheduling import (
@@ -19,6 +21,7 @@ from gtg.scheduling import (
     day_type_for_position,
     needs_recalibration,
     plan_day,
+    nearest_past_uncompleted,
     reschedule_remaining,
     set_reps,
     sets_for_day,
@@ -266,3 +269,52 @@ class TestRescheduleRemaining:
         result = reschedule_remaining(4, 15, plan, config, now)
         # total v done setech musí odpovídat novému celkovému počtu
         assert all(s.total == len(result.sets) for s in result.sets)
+
+
+TZ_SCHED = ZoneInfo("Europe/Prague")
+
+
+def _make_plan(times_h: list[int]) -> DayPlan:
+    sets = [
+        PlannedSet(
+            index=i + 1,
+            total=len(times_h),
+            scheduled_at=datetime(2026, 5, 13, h, 0, tzinfo=TZ_SCHED),
+            reps={"oap": 3},
+        )
+        for i, h in enumerate(times_h)
+    ]
+    return DayPlan(date="2026-05-13", day_type=DayType.MEDIUM, sets=sets)
+
+
+class TestNearestPastUncompleted:
+    def _now(self, h: int) -> datetime:
+        return datetime(2026, 5, 13, h, 0, tzinfo=TZ_SCHED)
+
+    def test_returns_closest_past(self):
+        plan = _make_plan([9, 10, 11])
+        result = nearest_past_uncompleted(plan, set(), self._now(10))
+        assert result is not None
+        assert result.index == 2  # 10:00 je nejbližší minulost k 10:00
+
+    def test_skips_already_done(self):
+        plan = _make_plan([9, 10, 11])
+        result = nearest_past_uncompleted(plan, {2}, self._now(10))
+        assert result is not None
+        assert result.index == 1  # set 2 hotov, vrátí set 1 (9:00)
+
+    def test_ignores_future_sets(self):
+        plan = _make_plan([9, 10, 11])
+        result = nearest_past_uncompleted(plan, set(), self._now(9))
+        assert result is not None
+        assert result.index == 1  # jen set 1 (9:00) je v minulosti
+
+    def test_no_past_sets_returns_none(self):
+        plan = _make_plan([10, 11, 12])
+        result = nearest_past_uncompleted(plan, set(), self._now(8))
+        assert result is None
+
+    def test_all_done_returns_none(self):
+        plan = _make_plan([9, 10])
+        result = nearest_past_uncompleted(plan, {1, 2}, self._now(11))
+        assert result is None

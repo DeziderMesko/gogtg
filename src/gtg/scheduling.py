@@ -163,3 +163,13 @@ def reschedule_remaining(
         sets=updated_done + new_sets,
         skipped=current_plan.skipped,
     )
+
+
+def nearest_past_uncompleted(
+    plan: DayPlan,
+    done_indices: set[int],
+    now: datetime,
+) -> PlannedSet | None:
+    """Vrátí nejbližší nesplněný set v minulosti (nejpozdější scheduled_at ≤ now)."""
+    candidates = [s for s in plan.sets if s.index not in done_indices and s.scheduled_at <= now]
+    return max(candidates, key=lambda s: s.scheduled_at) if candidates else None

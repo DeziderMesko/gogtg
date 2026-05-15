@@ -19,7 +19,7 @@ snooze_options_minutes: [15, 30, 60]
 
 ntfy:
   base_url: "https://ntfy.sh"
-  topic: "gtg-reminder-changeme"
+  topic: "gogtg-for-all"
 
 exercises:
   - id: oap

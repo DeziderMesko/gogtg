@@ -54,7 +54,7 @@ def test_reps_label(notifier: Notifier) -> None:
 def test_actions_header_contains_done(notifier: Notifier) -> None:
     actions = notifier._actions_header(make_planned_set())
     assert "Hotovo" in actions
-    assert "/callback/done?set=2" in actions
+    assert "/callback/done" in actions
 
 
 def test_actions_header_contains_all_snooze_options(notifier: Notifier) -> None:

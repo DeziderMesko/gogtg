@@ -93,33 +93,38 @@ def client(ctx: AppContext, tmp_path: Path) -> TestClient:
 
 
 @patch("gtg.server.datetime")
-def test_done_records_completed_set(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+def test_done_records_nearest_past_set(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+    # NOW=10:00; sets at 9:00 (idx 1), 10:00 (idx 2), 11:00 (idx 3)
+    # nearest past uncompleted = set 2 (scheduled_at=10:00, closest to now)
     mock_dt.now.return_value = NOW
 
-    resp = client.post("/callback/done?set=1")
+    resp = client.post("/callback/done")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok", "set": 1}
+    assert resp.json() == {"status": "ok", "set": 2}
 
     from gtg.storage import load_state
 
     state = load_state(ctx.state_path, TZ)
     assert len(state.completed_sets_today) == 1
-    assert state.completed_sets_today[0].index == 1
+    assert state.completed_sets_today[0].index == 2
     assert state.completed_sets_today[0].completed is True
 
 
 @patch("gtg.server.datetime")
 def test_done_appends_history(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
     mock_dt.now.return_value = NOW
-    client.post("/callback/done?set=2")
+    client.post("/callback/done")
     history_file = ctx.data_dir / "history" / "2026-05.jsonl"
     assert history_file.exists()
     lines = history_file.read_text().strip().splitlines()
     assert len(lines) == 1
 
 
-def test_done_unknown_set_returns_404(client: TestClient) -> None:
-    resp = client.post("/callback/done?set=99")
+@patch("gtg.server.datetime")
+def test_done_no_past_sets_returns_404(mock_dt: MagicMock, client: TestClient) -> None:
+    # before first set (8:00), no past uncompleted set exists
+    mock_dt.now.return_value = datetime(2026, 5, 13, 7, 0, tzinfo=TZ)
+    resp = client.post("/callback/done")
     assert resp.status_code == 404
 
 
@@ -130,7 +135,7 @@ def test_done_no_plan_returns_404(ctx: AppContext, tmp_path: Path) -> None:
     state.today_plan = None
     save_state(state, ctx.state_path)
     c = TestClient(create_app(ctx))
-    assert c.post("/callback/done?set=1").status_code == 404
+    assert c.post("/callback/done").status_code == 404
 
 
 # ── /callback/snooze ───────────────────────────────────────────────────────────

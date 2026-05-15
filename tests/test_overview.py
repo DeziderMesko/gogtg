@@ -135,7 +135,7 @@ def test_day_from_history_reps_label() -> None:
 
 def test_day_today_rest_when_no_plan() -> None:
     state = make_state(plan=None)
-    row = _day_today(TODAY, state, make_config(), TZ)
+    row = _day_today(TODAY, state, make_config(), TZ, [])
     assert row.day_type == DayType.REST
     assert row.sets == []
 
@@ -150,7 +150,7 @@ def test_day_today_shows_planned_sets() -> None:
         ],
     )
     state = make_state(plan=plan)
-    row = _day_today(TODAY, state, make_config(), TZ)
+    row = _day_today(TODAY, state, make_config(), TZ, [])
     assert len(row.sets) == 2
     assert not row.sets[0].done
     assert "09:00" in row.sets[0].tooltip
@@ -175,7 +175,23 @@ def test_day_today_marks_completed() -> None:
             completed=True,
         )
     ]
-    row = _day_today(TODAY, state, make_config(), TZ)
+    row = _day_today(TODAY, state, make_config(), TZ, [])
+    assert row.sets[0].done is True
+    assert row.sets[1].done is False
+
+
+def test_day_today_marks_completed_from_history() -> None:
+    plan = DayPlan(
+        date="2026-05-13",
+        day_type=DayType.MEDIUM,
+        sets=[
+            PlannedSet(index=1, total=2, scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(index=2, total=2, scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+        ],
+    )
+    state = make_state(plan=plan)
+    hist = [{"set_index": 1, "completed": True}]
+    row = _day_today(TODAY, state, make_config(), TZ, hist)
     assert row.sets[0].done is True
     assert row.sets[1].done is False
 

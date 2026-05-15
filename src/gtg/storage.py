@@ -161,10 +161,10 @@ def save_state(state: AppState, path: Path) -> None:
     os.replace(tmp, path)
 
 
-def history_record(record: CompletedSet, day_type: DayType) -> dict:
+def history_record(record: CompletedSet, day_type: DayType, plan_date: str) -> dict:
     """Sestaví řádek pro JSONL historii (pole dle spec 2.9)."""
     return {
-        "date": record.completed_at.date().isoformat(),
+        "date": plan_date,
         "time": record.completed_at.time().isoformat(),
         "set_index": record.index,
         "set_total": record.total,
@@ -174,9 +174,9 @@ def history_record(record: CompletedSet, day_type: DayType) -> dict:
     }
 
 
-def append_history(record: CompletedSet, day_type: DayType, data_dir: Path) -> None:
-    month = record.completed_at.strftime("%Y-%m")
+def append_history(record: CompletedSet, day_type: DayType, plan_date: str, data_dir: Path) -> None:
+    month = plan_date[:7]
     history_dir = data_dir / "history"
     history_dir.mkdir(parents=True, exist_ok=True)
     with jsonlines.open(history_dir / f"{month}.jsonl", mode="a") as writer:
-        writer.write(history_record(record, day_type))
+        writer.write(history_record(record, day_type, plan_date))

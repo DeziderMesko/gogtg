@@ -1,7 +1,7 @@
 import calendar
 import json
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -88,12 +88,15 @@ def _day_from_history(d: date, records: list[dict], config: Config) -> DayRow:
     )
 
 
-def _day_today(d: date, state: AppState, config: Config, tz: ZoneInfo) -> DayRow:
+def _day_today(
+    d: date, state: AppState, config: Config, tz: ZoneInfo, hist_today: list[dict]
+) -> DayRow:
     plan = state.today_plan
     if plan is None:
         return DayRow(date=d, day_type=DayType.REST)
 
     done_by_idx = {cs.index for cs in state.completed_sets_today if cs.completed}
+    done_by_idx |= {r["set_index"] for r in hist_today if r["completed"]}
     ex_ids = [ex.id for ex in config.exercises]
     reps = plan.sets[0].reps if plan.sets else {}
 
@@ -104,6 +107,33 @@ def _day_today(d: date, state: AppState, config: Config, tz: ZoneInfo) -> DayRow
             sets.append(SetStatus(tooltip=f"{t} — splněno", done=True))
         else:
             sets.append(SetStatus(tooltip=f"{t} — naplánováno", done=False))
+
+    return DayRow(
+        date=d,
+        day_type=plan.day_type,
+        sets=sets,
+        reps_label=_reps_label(reps, ex_ids),
+        reps_tooltip=_reps_tooltip(config),
+    )
+
+
+def _day_past_from_state(d: date, state: AppState, config: Config, tz: ZoneInfo) -> DayRow:
+    """Minulý den, jehož plán je stále v state (rollover ještě neproběhl)."""
+    plan = state.today_plan
+    if plan is None:
+        return DayRow(date=d, day_type=None)
+
+    done_by_idx = {cs.index for cs in state.completed_sets_today if cs.completed}
+    ex_ids = [ex.id for ex in config.exercises]
+    reps = plan.sets[0].reps if plan.sets else {}
+
+    sets = []
+    for ps in plan.sets:
+        if ps.index in done_by_idx:
+            t = ps.scheduled_at.astimezone(tz).strftime("%H:%M")
+            sets.append(SetStatus(tooltip=f"{t} — splněno", done=True))
+        else:
+            sets.append(SetStatus(tooltip="nesplněno", done=False))
 
     return DayRow(
         date=d,
@@ -150,9 +180,13 @@ def build_month_rows(
     for day_num in range(1, days_in_month + 1):
         d = date(year, month, day_num)
         if d < today:
-            rows.append(_day_from_history(d, history.get(d.isoformat(), []), config))
+            hist = history.get(d.isoformat(), [])
+            if not hist and state.today_plan and state.today_plan.date == d.isoformat():
+                rows.append(_day_past_from_state(d, state, config, tz))
+            else:
+                rows.append(_day_from_history(d, hist, config))
         elif d == today:
-            rows.append(_day_today(d, state, config, tz))
+            rows.append(_day_today(d, state, config, tz, history.get(today.isoformat(), [])))
         else:
             future_pos = advance_cycle(future_pos, config)
             day_type = day_type_for_position(future_pos, config)

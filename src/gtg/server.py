@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 
 from gtg.models import CompletedSet, Config, DayPlan
 from gtg.notifier import Notifier
-from gtg.scheduling import reschedule_remaining
+from gtg.scheduling import nearest_past_uncompleted, reschedule_remaining
 from gtg.storage import append_history, load_state, save_state
 
 
@@ -29,7 +29,6 @@ def _regenerate_overview(ctx: AppContext) -> None:
     if ctx.overview_path is None:
         return
     from gtg.overview import generate
-    from zoneinfo import ZoneInfo
     generate(ctx.state_path, ctx.data_dir, ctx.overview_path, ctx.config, ctx.tz)
 
 
@@ -37,17 +36,18 @@ def create_app(ctx: AppContext) -> FastAPI:
     app = FastAPI(title="GTG Reminder")
 
     @app.post("/callback/done")
-    def callback_done(set: int = Query(...)):
+    def callback_done(set: int | None = Query(default=None)):
         state = load_state(ctx.state_path, ctx.tz)
         if state is None or state.today_plan is None:
             raise HTTPException(404, "No active plan")
 
         plan = state.today_plan
-        planned = next((s for s in plan.sets if s.index == set), None)
-        if planned is None:
-            raise HTTPException(404, f"Set {set} not in plan")
-
         now = datetime.now(ctx.tz)
+        done_indices = {cs.index for cs in state.completed_sets_today if cs.completed}
+        planned = nearest_past_uncompleted(plan, done_indices, now)
+        if planned is None:
+            raise HTTPException(404, "No uncompleted past set found")
+
         completed = CompletedSet(
             index=planned.index,
             total=planned.total,
@@ -57,11 +57,11 @@ def create_app(ctx: AppContext) -> FastAPI:
             completed=True,
         )
         state.completed_sets_today.append(completed)
-        append_history(completed, plan.day_type, ctx.data_dir)
+        append_history(completed, plan.day_type, plan.date, ctx.data_dir)
         save_state(state, ctx.state_path)
         _regenerate_overview(ctx)
 
-        return {"status": "ok", "set": set}
+        return {"status": "ok", "set": planned.index}
 
     @app.post("/callback/snooze")
     def callback_snooze(set: int = Query(...), minutes: int = Query(...)):

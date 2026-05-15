@@ -9,7 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 
-from gtg.models import Config, DayPlan, DayType
+from gtg.models import CompletedSet, Config, DayPlan, DayType
 from gtg.notifier import Notifier
 from gtg.scheduling import (
     advance_cycle,
@@ -18,7 +18,7 @@ from gtg.scheduling import (
     plan_day,
 )
 from gtg.server import AppContext, create_app
-from gtg.storage import load_config, load_state, save_state
+from gtg.storage import append_history, load_config, load_state, save_state
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +127,21 @@ class GTGScheduler:
         state = load_state(self.state_path, self.tz)
         if state is None:
             return
+
+        if state.today_plan is not None and not state.today_plan.skipped:
+            done_indices = {cs.index for cs in state.completed_sets_today if cs.completed}
+            plan = state.today_plan
+            for ps in plan.sets:
+                if ps.index not in done_indices:
+                    skipped = CompletedSet(
+                        index=ps.index,
+                        total=ps.total,
+                        scheduled_at=ps.scheduled_at,
+                        completed_at=ps.scheduled_at,
+                        reps=ps.reps,
+                        completed=False,
+                    )
+                    append_history(skipped, plan.day_type, plan.date, self.data_dir)
 
         state.completed_sets_today = []
         state.cycle_position = advance_cycle(state.cycle_position, self.config)
