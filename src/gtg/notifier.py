@@ -36,37 +36,32 @@ class Notifier:
         )
         return "; ".join(actions)
 
+    def _post(self, message: str, headers: dict[str, str]) -> None:
+        with httpx.Client(timeout=10) as client:
+            client.post(
+                self._topic_url(),
+                content=message.encode("utf-8"),
+                headers={k: v.encode("utf-8") for k, v in headers.items()},
+            )
+
     def send_set_notification(self, planned_set: PlannedSet) -> None:
         reps = self._reps_label(planned_set)
         message = f"Čas na GTG set #{planned_set.index} z {planned_set.total}. {reps}."
-        headers = {
+        self._post(message, {
             "Title": "GTG Reminder",
             "Priority": "default",
             "Tags": "muscle",
             "Actions": self._actions_header(planned_set),
-        }
-        with httpx.Client(timeout=10) as client:
-            client.post(self._topic_url(), content=message.encode(), headers=headers)
+        })
 
     def send_calibration_reminder(self) -> None:
-        message = "Čas na re-kalibraci! Otestuj svá maxima (OAP / OLS / Shyb) a zadej nové hodnoty."
-        headers = {
-            "Title": "GTG — nová kalibrace",
-            "Priority": "high",
-            "Tags": "muscle,stopwatch",
-        }
-        with httpx.Client(timeout=10) as client:
-            client.post(self._topic_url(), content=message.encode(), headers=headers)
+        self._post(
+            "Čas na re-kalibraci! Otestuj svá maxima (OAP / OLS / Shyb) a zadej nové hodnoty.",
+            {"Title": "GTG — nová kalibrace", "Priority": "high", "Tags": "muscle,stopwatch"},
+        )
 
     def send_skip_confirmation(self) -> None:
-        headers = {
-            "Title": "GTG — dnešek přeskočen",
-            "Priority": "low",
-            "Tags": "muscle",
-        }
-        with httpx.Client(timeout=10) as client:
-            client.post(
-                self._topic_url(),
-                content="Dnešní trénink byl přeskočen. Zítra jedeme dál.".encode(),
-                headers=headers,
-            )
+        self._post(
+            "Dnešní trénink byl přeskočen. Zítra jedeme dál.",
+            {"Title": "GTG — dnešek přeskočen", "Priority": "low", "Tags": "muscle"},
+        )

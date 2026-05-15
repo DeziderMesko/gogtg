@@ -99,7 +99,7 @@ def test_send_calibration_reminder_high_priority(mock_client_cls: MagicMock) -> 
     notifier.send_calibration_reminder()
 
     _, kwargs = mock_client.post.call_args
-    assert kwargs["headers"]["Priority"] == "high"
+    assert kwargs["headers"]["Priority"] == b"high"
 
 
 @patch("gtg.notifier.httpx.Client")
