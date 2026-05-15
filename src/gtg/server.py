@@ -101,4 +101,12 @@ def create_app(ctx: AppContext) -> FastAPI:
             raise HTTPException(404, "Overview not generated yet")
         return ctx.overview_path.read_text(encoding="utf-8")
 
+    @app.post("/ntfytest")
+    def ntfytest():
+        state = load_state(ctx.state_path, ctx.tz)
+        if state is None or state.today_plan is None or not state.today_plan.sets:
+            raise HTTPException(404, "No active plan")
+        ctx.notifier.send_set_notification(state.today_plan.sets[0])
+        return {"status": "ok"}
+
     return app
