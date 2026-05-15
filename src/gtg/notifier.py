@@ -42,7 +42,7 @@ class Notifier:
 
     def send_set_notification(self, planned_set: PlannedSet) -> None:
         reps = self._reps_label(planned_set)
-        message = f"Čas na GTG set #{planned_set.index} z {planned_set.total}. {reps}."
+        message = f"GTG set #{planned_set.index} of {planned_set.total}. {reps}."
         self._post(message, {
             "Title": "GTG Reminder",
             "Priority": "default",
@@ -52,12 +52,12 @@ class Notifier:
 
     def send_calibration_reminder(self) -> None:
         self._post(
-            "Čas na re-kalibraci! Otestuj svá maxima (OAP / OLS / Shyb) a zadej nové hodnoty.",
-            {"Title": "GTG — nová kalibrace", "Priority": "high", "Tags": "muscle,stopwatch"},
+            "Time to recalibrate! Test your maxes (OAP / OLS / Pull-ups) and enter new values.",
+            {"Title": "GTG — new calibration", "Priority": "high", "Tags": "muscle,stopwatch"},
         )
 
     def send_skip_confirmation(self) -> None:
         self._post(
-            "Dnešní trénink byl přeskočen. Zítra jedeme dál.",
-            {"Title": "GTG — dnešek přeskočen", "Priority": "low", "Tags": "muscle"},
+            "Today's workout was skipped. Back at it tomorrow.",
+            {"Title": "GTG — day skipped", "Priority": "low", "Tags": "muscle"},
         )
