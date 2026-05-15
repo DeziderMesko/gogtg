@@ -5,6 +5,7 @@ from typing import Callable
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
 from gtg.models import CompletedSet, Config, DayPlan
@@ -34,6 +35,11 @@ def _regenerate_overview(ctx: AppContext) -> None:
 
 def create_app(ctx: AppContext) -> FastAPI:
     app = FastAPI(title="GTG Reminder")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["https://ntfy.sh"],
+        allow_methods=["POST"],
+    )
 
     @app.post("/callback/done")
     def callback_done(set: int | None = Query(default=None)):
