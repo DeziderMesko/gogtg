@@ -22,19 +22,15 @@ class Notifier:
         return " / ".join(parts)
 
     def _actions_header(self, planned_set: PlannedSet) -> str:
+        # ntfy supports max 3 action buttons
         base = self.callback_base_url.rstrip("/")
         idx = planned_set.index
-        actions: list[str] = [
+        snooze = self.config.snooze_options_minutes[0]
+        return "; ".join([
             f"http, Hotovo, {base}/callback/done, method=POST, clear=true",
-        ]
-        for minutes in self.config.snooze_options_minutes:
-            actions.append(
-                f"http, Snooze {minutes} min, {base}/callback/snooze?set={idx}&minutes={minutes}, method=POST, clear=true"
-            )
-        actions.append(
-            f"http, Skip dnesek, {base}/callback/skip, method=POST, clear=true"
-        )
-        return "; ".join(actions)
+            f"http, Snooze {snooze} min, {base}/callback/snooze?set={idx}&minutes={snooze}, method=POST, clear=true",
+            f"http, Skip dnesek, {base}/callback/skip, method=POST, clear=true",
+        ])
 
     def _post(self, message: str, headers: dict[str, str]) -> None:
         with httpx.Client(timeout=10) as client:

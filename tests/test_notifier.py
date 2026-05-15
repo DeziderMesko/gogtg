@@ -57,10 +57,12 @@ def test_actions_header_contains_done(notifier: Notifier) -> None:
     assert "/callback/done" in actions
 
 
-def test_actions_header_contains_all_snooze_options(notifier: Notifier) -> None:
+def test_actions_header_contains_first_snooze_option(notifier: Notifier) -> None:
+    # ntfy limit: max 3 actions — only first snooze option is included
     actions = notifier._actions_header(make_planned_set())
-    for minutes in [15, 30, 60]:
-        assert f"minutes={minutes}" in actions
+    assert "minutes=15" in actions
+    assert "minutes=30" not in actions
+    assert "minutes=60" not in actions
 
 
 def test_actions_header_contains_skip(notifier: Notifier) -> None:
