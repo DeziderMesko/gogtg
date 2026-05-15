@@ -170,6 +170,9 @@ def nearest_past_uncompleted(
     done_indices: set[int],
     now: datetime,
 ) -> PlannedSet | None:
-    """Vrátí nejbližší nesplněný set v minulosti (nejpozdější scheduled_at ≤ now)."""
-    candidates = [s for s in plan.sets if s.index not in done_indices and s.scheduled_at <= now]
-    return max(candidates, key=lambda s: s.scheduled_at) if candidates else None
+    """Vrátí nejpozdější set v minulosti, pokud ještě není splněný. Jinak None."""
+    past = [s for s in plan.sets if s.scheduled_at <= now]
+    if not past:
+        return None
+    latest = max(past, key=lambda s: s.scheduled_at)
+    return None if latest.index in done_indices else latest

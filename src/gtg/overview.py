@@ -9,10 +9,10 @@ from gtg.models import AppState, Config, DayType
 from gtg.scheduling import advance_cycle, base_sets, day_type_for_position, set_reps, sets_for_day
 from gtg.storage import load_state
 
-_CZ_DAY = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"]
-_CZ_MONTH = [
-    "", "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
-    "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec",
+_DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+_MONTH = [
+    "", "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
 ]
 _TYPE_LABEL = {
     DayType.LIGHT: "Light",
@@ -77,9 +77,9 @@ def _day_from_history(d: date, records: list[dict], config: Config) -> DayRow:
         if i in done_idx:
             rec = next(r for r in records if r["set_index"] == i)
             t = rec["time"][:5]
-            sets.append(SetStatus(tooltip=f"{t} — splněno", done=True))
+            sets.append(SetStatus(tooltip=f"{t} — done", done=True))
         else:
-            sets.append(SetStatus(tooltip="nesplněno", done=False))
+            sets.append(SetStatus(tooltip="missed", done=False))
 
     return DayRow(
         date=d,
@@ -112,10 +112,10 @@ def _day_today(
     for ps in plan.sets:
         t = ps.scheduled_at.astimezone(tz).strftime("%H:%M")
         if ps.index in done_by_idx:
-            sets.append(SetStatus(tooltip=f"{t} — splněno", done=True))
+            sets.append(SetStatus(tooltip=f"{t} — done", done=True))
         else:
             sets.append(SetStatus(
-                tooltip=f"{t} — naplánováno",
+                tooltip=f"{t} — scheduled",
                 done=False,
                 next_notify=(ps.index == next_idx),
             ))
@@ -144,9 +144,9 @@ def _day_past_from_state(d: date, state: AppState, config: Config, tz: ZoneInfo)
     for ps in plan.sets:
         if ps.index in done_by_idx:
             t = ps.scheduled_at.astimezone(tz).strftime("%H:%M")
-            sets.append(SetStatus(tooltip=f"{t} — splněno", done=True))
+            sets.append(SetStatus(tooltip=f"{t} — done", done=True))
         else:
-            sets.append(SetStatus(tooltip="nesplněno", done=False))
+            sets.append(SetStatus(tooltip="missed", done=False))
 
     return DayRow(
         date=d,
@@ -166,7 +166,7 @@ def _day_future(d: date, day_type: DayType, state: AppState, config: Config) -> 
     reps = set_reps(state.max_reps)
     ex_ids = [ex.id for ex in config.exercises]
 
-    sets = [SetStatus(tooltip="naplánováno", done=False) for _ in range(n)]
+    sets = [SetStatus(tooltip="scheduled", done=False) for _ in range(n)]
     return DayRow(
         date=d,
         day_type=day_type,
@@ -229,7 +229,7 @@ def _actions_cell(row: DayRow, snooze_options: list[int]) -> str:
         return f'<button class="act" disabled>{label}</button>'
 
     si = row.next_set_index
-    parts = [btn("Potvrdit", "/callback/done")]
+    parts = [btn("Done", "/callback/done")]
     for m in snooze_options:
         parts.append(btn(f"Snooze {m}", f"/callback/snooze?set={si}&minutes={m}", si is not None))
     parts.append(btn("Skip day", "/callback/skip"))
@@ -237,7 +237,7 @@ def _actions_cell(row: DayRow, snooze_options: list[int]) -> str:
 
 
 def _row_html(row: DayRow, is_today: bool, snooze_options: list[int]) -> str:
-    day_abbrev = _CZ_DAY[row.date.weekday()]
+    day_abbrev = _DAY[row.date.weekday()]
     day_num = f"{row.date.day}.&nbsp;{row.date.month}."
     bold = ' class="today"' if is_today else ""
 
@@ -296,15 +296,15 @@ _CSS = """
 
 
 def render_html(rows: list[DayRow], year: int, month: int, snooze_options: list[int]) -> str:
-    title = f"{_CZ_MONTH[month]} {year}"
+    title = f"{_MONTH[month]} {year}"
     today = date.today()
     rows_html = "\n".join(_row_html(r, r.date == today, snooze_options) for r in rows)
     return (
-        f'<!DOCTYPE html>\n<html lang="cs">\n<head>\n'
+        f'<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         f'<meta charset="UTF-8">\n<title>GTG — {title}</title>\n'
         f'<style>\n{_CSS}\n</style>\n</head>\n<body>\n'
         f'<h1>{title}</h1>\n<table>\n{rows_html}\n</table>\n'
-        f'<div class="legend"><span>■ Splněno</span><span>□ Naplánováno / nesplněno</span></div>\n'
+        f'<div class="legend"><span>■ Done</span><span>□ Scheduled / missed</span></div>\n'
         f'</body>\n</html>\n'
     )
 

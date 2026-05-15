@@ -245,7 +245,7 @@ def test_day_future_work_day_has_squares() -> None:
     row = _day_future(date(2026, 5, 20), DayType.MEDIUM, state, make_config())
     assert len(row.sets) > 0
     assert all(not s.done for s in row.sets)
-    assert all(s.tooltip == "naplánováno" for s in row.sets)
+    assert all(s.tooltip == "scheduled" for s in row.sets)
 
 
 # ── build_month_rows ───────────────────────────────────────────────────────────
@@ -279,12 +279,12 @@ def test_build_month_rows_today_is_medium(tmp_path: Path) -> None:
 def test_render_html_contains_month_title() -> None:
     rows: list[DayRow] = []
     html = render_html(rows, 2026, 5, [15, 30, 60])
-    assert "Květen 2026" in html
+    assert "May 2026" in html
 
 
 def test_render_html_contains_legend() -> None:
     html = render_html([], 2026, 5, [15, 30, 60])
-    assert "Splněno" in html
+    assert "Done" in html
     assert "□" in html
     assert "■" in html
 

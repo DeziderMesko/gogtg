@@ -27,9 +27,9 @@ class Notifier:
         idx = planned_set.index
         snooze = self.config.snooze_options_minutes[0]
         return "; ".join([
-            f"http, Hotovo, {base}/callback/done, method=POST, clear=true",
-            f"http, Snooze {snooze} min, {base}/callback/snooze?set={idx}&minutes={snooze}, method=POST, clear=true",
-            f"http, Skip dnesek, {base}/callback/skip, method=POST, clear=true",
+            f"http, Done, {base}/callback/done, method=POST, clear=true",
+            f"http, Snooze {snooze}, {base}/callback/snooze?set={idx}&minutes={snooze}, method=POST, clear=true",
+            f"http, Skip day, {base}/callback/skip, method=POST, clear=true",
         ])
 
     def _post(self, message: str, headers: dict[str, str]) -> None:
