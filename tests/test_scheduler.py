@@ -95,39 +95,24 @@ def test_schedule_sets_adds_future_jobs(sched_instance: GTGScheduler, tmp_path: 
     assert len(set_jobs(sched_instance)) == 3
 
 
-def test_schedule_sets_skips_old_sets(sched_instance: GTGScheduler) -> None:
+def test_schedule_sets_skips_past_sets(sched_instance: GTGScheduler) -> None:
     now = datetime.now(TZ)
-    old_time = now - timedelta(minutes=60)
-    recent_time = now - timedelta(minutes=10)
-    future_time = now + timedelta(minutes=30)
+    past1 = now - timedelta(minutes=60)
+    past2 = now - timedelta(minutes=10)
+    future = now + timedelta(minutes=30)
 
     plan = DayPlan(
         date=TODAY_STR,
         day_type=DayType.MEDIUM,
         sets=[
-            PlannedSet(index=1, total=3, scheduled_at=old_time, reps={"oap": 3}),
-            PlannedSet(index=2, total=3, scheduled_at=recent_time, reps={"oap": 3}),
-            PlannedSet(index=3, total=3, scheduled_at=future_time, reps={"oap": 3}),
+            PlannedSet(index=1, total=3, scheduled_at=past1, reps={"oap": 3}),
+            PlannedSet(index=2, total=3, scheduled_at=past2, reps={"oap": 3}),
+            PlannedSet(index=3, total=3, scheduled_at=future, reps={"oap": 3}),
         ],
     )
     sched_instance._schedule_sets(plan)
     jobs = set_jobs(sched_instance)
-    assert len(jobs) == 2  # old_time přeskočen
-
-
-def test_schedule_sets_catchup_fires_immediately(sched_instance: GTGScheduler) -> None:
-    now = datetime.now(TZ)
-    recent = now - timedelta(minutes=10)
-    plan = DayPlan(
-        date=TODAY_STR,
-        day_type=DayType.MEDIUM,
-        sets=[PlannedSet(index=1, total=1, scheduled_at=recent, reps={"oap": 3})],
-    )
-    sched_instance._schedule_sets(plan)
-    jobs = set_jobs(sched_instance)
-    assert len(jobs) == 1
-    # run_date musí být >= nyní (catch-up)
-    assert jobs[0].next_run_time >= now - timedelta(seconds=5)
+    assert len(jobs) == 1  # jen budoucí set
 
 
 # ── _cancel_set_jobs ───────────────────────────────────────────────────────────

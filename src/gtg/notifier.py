@@ -25,14 +25,14 @@ class Notifier:
         base = self.callback_base_url.rstrip("/")
         idx = planned_set.index
         actions: list[str] = [
-            f"http, ✅ Hotovo, {base}/callback/done, method=POST, clear=true",
+            f"http, Hotovo, {base}/callback/done, method=POST, clear=true",
         ]
         for minutes in self.config.snooze_options_minutes:
             actions.append(
-                f"http, ⏸ Snooze {minutes} min, {base}/callback/snooze?set={idx}&minutes={minutes}, method=POST, clear=true"
+                f"http, Snooze {minutes} min, {base}/callback/snooze?set={idx}&minutes={minutes}, method=POST, clear=true"
             )
         actions.append(
-            f"http, ❌ Skip dnešek, {base}/callback/skip, method=POST, clear=true"
+            f"http, Skip dnesek, {base}/callback/skip, method=POST, clear=true"
         )
         return "; ".join(actions)
 

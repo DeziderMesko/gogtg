@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -22,7 +22,6 @@ from gtg.storage import append_history, load_config, load_state, save_state
 
 logger = logging.getLogger(__name__)
 
-_CATCHUP_MINUTES = 30
 _SET_JOB_PREFIX = "gtg_set_"
 _ROLLOVER_JOB_ID = "gtg_rollover"
 
@@ -95,14 +94,12 @@ class GTGScheduler:
 
     def _schedule_sets(self, plan: DayPlan) -> None:
         now = datetime.now(self.tz)
-        cutoff = now - timedelta(minutes=_CATCHUP_MINUTES)
 
         for s in plan.sets:
-            if s.scheduled_at < cutoff:
-                logger.info("Set #%d (%s) příliš starý — přeskočen", s.index, s.scheduled_at)
+            if s.scheduled_at <= now:
+                logger.info("Set #%d (%s) v minulosti — přeskočen", s.index, s.scheduled_at)
                 continue
 
-            run_at = s.scheduled_at if s.scheduled_at >= now else now
             payload = {
                 "index": s.index,
                 "total": s.total,
@@ -111,7 +108,7 @@ class GTGScheduler:
             }
             self._sched.add_job(
                 self._fire_notification,
-                trigger=DateTrigger(run_date=run_at),
+                trigger=DateTrigger(run_date=s.scheduled_at),
                 id=self._job_id(plan.date, s.index),
                 args=[payload],
                 replace_existing=True,
