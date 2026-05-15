@@ -196,6 +196,40 @@ def test_day_today_marks_completed_from_history() -> None:
     assert row.sets[1].done is False
 
 
+def test_day_today_next_notify_highlights_nearest_future_set() -> None:
+    # Sety daleko v budoucnosti — next_notify musí označit první nesplněný
+    plan = DayPlan(
+        date="2099-06-01",
+        day_type=DayType.MEDIUM,
+        sets=[
+            PlannedSet(index=1, total=3, scheduled_at=datetime(2099, 6, 1, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(index=2, total=3, scheduled_at=datetime(2099, 6, 1, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(index=3, total=3, scheduled_at=datetime(2099, 6, 1, 13, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+        ],
+    )
+    state = make_state(plan=plan)
+    row = _day_today(date(2099, 6, 1), state, make_config(), TZ, [])
+    assert row.sets[0].next_notify is True
+    assert row.sets[1].next_notify is False
+    assert row.sets[2].next_notify is False
+
+
+def test_day_today_next_notify_skips_done_sets() -> None:
+    plan = DayPlan(
+        date="2099-06-01",
+        day_type=DayType.MEDIUM,
+        sets=[
+            PlannedSet(index=1, total=2, scheduled_at=datetime(2099, 6, 1, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(index=2, total=2, scheduled_at=datetime(2099, 6, 1, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+        ],
+    )
+    state = make_state(plan=plan)
+    hist = [{"set_index": 1, "completed": True}]
+    row = _day_today(date(2099, 6, 1), state, make_config(), TZ, hist)
+    assert row.sets[0].next_notify is False  # hotovo
+    assert row.sets[1].next_notify is True   # první nesplněný budoucí
+
+
 # ── _day_future ────────────────────────────────────────────────────────────────
 
 

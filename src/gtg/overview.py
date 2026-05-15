@@ -1,7 +1,7 @@
 import calendar
 import json
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -26,6 +26,7 @@ _TYPE_LABEL = {
 class SetStatus:
     tooltip: str
     done: bool
+    next_notify: bool = False
 
 
 @dataclass
@@ -100,13 +101,23 @@ def _day_today(
     ex_ids = [ex.id for ex in config.exercises]
     reps = plan.sets[0].reps if plan.sets else {}
 
+    now = datetime.now(tz)
+    next_idx = next(
+        (ps.index for ps in plan.sets if ps.index not in done_by_idx and ps.scheduled_at > now),
+        None,
+    )
+
     sets = []
     for ps in plan.sets:
         t = ps.scheduled_at.astimezone(tz).strftime("%H:%M")
         if ps.index in done_by_idx:
             sets.append(SetStatus(tooltip=f"{t} — splněno", done=True))
         else:
-            sets.append(SetStatus(tooltip=f"{t} — naplánováno", done=False))
+            sets.append(SetStatus(
+                tooltip=f"{t} — naplánováno",
+                done=False,
+                next_notify=(ps.index == next_idx),
+            ))
 
     return DayRow(
         date=d,
@@ -200,7 +211,8 @@ def build_month_rows(
 
 def _square(s: SetStatus) -> str:
     char = "■" if s.done else "□"
-    return f'<span class="sq" title="{s.tooltip}">{char}</span>'
+    cls = "sq next" if s.next_notify else "sq"
+    return f'<span class="{cls}" title="{s.tooltip}">{char}</span>'
 
 
 def _row_html(row: DayRow, is_today: bool) -> str:
@@ -247,6 +259,7 @@ _CSS = """
   .dtype.rest{color:#bbb}
   .squares{letter-spacing:.2em}
   .sq{cursor:default}
+  .sq.next{color:#1a7a1a;font-weight:bold;outline:2px solid #1a7a1a;outline-offset:2px;border-radius:2px}
   .dash{color:#ccc}
   .reps{font-variant-numeric:tabular-nums;cursor:help;color:#555}
   .legend{margin-top:1.5rem;color:#999}
