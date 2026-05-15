@@ -200,23 +200,22 @@ def _row_html(row: DayRow, is_today: bool) -> str:
 
 
 _CSS = """
-  body{font-family:sans-serif;padding:1rem 2rem;background:#fff;color:#111;max-width:600px}
-  h1{font-size:1.2rem;margin-bottom:1rem}
+  body{font-family:sans-serif;font-size:.9rem;padding:1rem 2rem;background:#fff;color:#111;max-width:600px}
+  h1{font-size:.9rem;font-weight:bold;margin-bottom:1rem}
   table{border-collapse:collapse}
-  td{padding:.15rem .55rem;vertical-align:middle;white-space:nowrap}
+  td{padding:.15rem .55rem;vertical-align:middle;white-space:nowrap;font-size:.9rem}
   tr.today td{font-weight:bold}
   td.dow{color:#888;min-width:2rem}
   td.dnum{text-align:right;font-variant-numeric:tabular-nums;min-width:3.5rem}
-  .dtype{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
-  .dtype.light{color:#999}
-  .dtype.medium{color:#666}
+  .dtype{text-transform:uppercase;letter-spacing:.05em;color:#999}
   .dtype.heavy{color:#333}
+  .dtype.medium{color:#666}
   .dtype.rest{color:#bbb}
-  .squares{letter-spacing:.2em;font-size:1rem}
+  .squares{letter-spacing:.2em}
   .sq{cursor:default}
   .dash{color:#ccc}
-  .reps{font-variant-numeric:tabular-nums;font-family:monospace;font-size:.88rem;cursor:help;color:#555}
-  .legend{margin-top:1.5rem;font-size:.78rem;color:#999}
+  .reps{font-variant-numeric:tabular-nums;cursor:help;color:#555}
+  .legend{margin-top:1.5rem;color:#999}
   .legend span{margin-right:1rem}
 """.strip()
 
