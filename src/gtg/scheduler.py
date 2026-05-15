@@ -42,7 +42,10 @@ class GTGScheduler:
         self.data_dir = data_dir
         self.notifier = notifier
         self.tz = tz
-        self._sched = _scheduler or BackgroundScheduler(timezone=tz)
+        self._sched = _scheduler or BackgroundScheduler(
+            timezone=tz,
+            job_defaults={"misfire_grace_time": 600},
+        )
 
     def start(self) -> None:
         self._ensure_today_plan()
