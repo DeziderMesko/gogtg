@@ -87,7 +87,7 @@ def test_send_set_notification_posts_to_topic(mock_client_cls: MagicMock) -> Non
     args, kwargs = mock_client.post.call_args
     assert args[0] == "https://ntfy.sh/gtg-test"
     body = kwargs["content"].decode()
-    assert "set #2 z 5" in body
+    assert "set #2 of 5" in body
     assert "OAP: 3×" in body
     assert "Actions" in kwargs["headers"]
 

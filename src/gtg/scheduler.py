@@ -34,6 +34,7 @@ class GTGScheduler:
         data_dir: Path,
         notifier: Notifier,
         tz: ZoneInfo,
+        overview_path: Path | None = None,
         _scheduler: BackgroundScheduler | None = None,
     ) -> None:
         self.config = config
@@ -41,6 +42,7 @@ class GTGScheduler:
         self.data_dir = data_dir
         self.notifier = notifier
         self.tz = tz
+        self.overview_path = overview_path
         self._sched = _scheduler or BackgroundScheduler(
             timezone=tz,
             job_defaults={"misfire_grace_time": 600},
@@ -72,14 +74,14 @@ class GTGScheduler:
         return f"{_SET_JOB_PREFIX}{plan_date}_{index}"
 
     def _cancel_set_jobs(self) -> None:
+        import contextlib
+
         from apscheduler.jobstores.base import JobLookupError as ApsJobLookupError
 
         for job in self._sched.get_jobs():
             if job.id.startswith(_SET_JOB_PREFIX):
-                try:
+                with contextlib.suppress(ApsJobLookupError):
                     job.remove()
-                except ApsJobLookupError:
-                    pass  # job already fired and self-removed
 
     def _fire_notification(self, payload: dict) -> None:
         from gtg.models import PlannedSet
@@ -165,10 +167,19 @@ class GTGScheduler:
             self._cancel_set_jobs()
             self._schedule_sets(state.today_plan)
 
+        self._regenerate_overview()
+
     def _schedule_today_sets(self) -> None:
         state = load_state(self.state_path, self.tz)
         if state and state.today_plan:
             self._schedule_sets(state.today_plan)
+
+    def _regenerate_overview(self) -> None:
+        if self.overview_path is None:
+            return
+        from gtg.overview import generate as generate_overview
+
+        generate_overview(self.state_path, self.data_dir, self.overview_path, self.config, self.tz)
 
     def _add_rollover_job(self) -> None:
         self._sched.add_job(
@@ -194,18 +205,17 @@ def main() -> None:
     data_dir.mkdir(parents=True, exist_ok=True)
 
     notifier = Notifier(config=config, callback_base_url=callback_base_url)
+    overview_path = data_dir / "overview.html"
     gtg = GTGScheduler(
         config=config,
         state_path=state_path,
         data_dir=data_dir,
         notifier=notifier,
         tz=tz,
+        overview_path=overview_path,
     )
     gtg.start()
-
-    overview_path = data_dir / "overview.html"
-    from gtg.overview import generate as generate_overview
-    generate_overview(state_path, data_dir, overview_path, config, tz)
+    gtg._regenerate_overview()
 
     ctx = AppContext(
         config=config,

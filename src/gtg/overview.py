@@ -290,8 +290,10 @@ _CSS = """
   .act{font-size:.8rem;padding:.1rem .4rem;margin-right:.2rem;cursor:pointer;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#333}
   .act:hover:not(:disabled){background:#e8e8e8}
   .act:disabled{color:#bbb;cursor:default}
-  .legend{margin-top:1.5rem;color:#999}
+  .legend{margin-top:1.5rem;color:#999;font-size:.85rem}
   .legend span{margin-right:1rem}
+  .legend .sq{color:#111}
+  .legend .sq.next{color:#aaa}
 """.strip()
 
 
@@ -304,7 +306,11 @@ def render_html(rows: list[DayRow], year: int, month: int, snooze_options: list[
         f'<meta charset="UTF-8">\n<title>GTG — {title}</title>\n'
         f'<style>\n{_CSS}\n</style>\n</head>\n<body>\n'
         f'<h1>{title}</h1>\n<table>\n{rows_html}\n</table>\n'
-        f'<div class="legend"><span>■ Done</span><span>□ Scheduled / missed</span></div>\n'
+        f'<div class="legend">'
+        f'<span><span class="sq">■</span> Done</span>'
+        f'<span><span class="sq next">■</span> Next</span>'
+        f'<span>□ Scheduled / missed</span>'
+        f'</div>\n'
         f'</body>\n</html>\n'
     )
 

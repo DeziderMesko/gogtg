@@ -297,11 +297,12 @@ class TestNearestPastUncompleted:
         assert result is not None
         assert result.index == 2  # 10:00 je nejbližší minulost k 10:00
 
-    def test_latest_done_returns_none(self):
+    def test_latest_done_falls_back_to_previous(self):
         plan = _make_plan([9, 10, 11])
-        # nejpozdější past set (10:00) je splněn → nedojde dál, vrátí None
+        # set #2 (10:00) splněn → vrátí set #1 (9:00), který je starší a nesplněn
         result = nearest_past_uncompleted(plan, {2}, self._now(10))
-        assert result is None
+        assert result is not None
+        assert result.index == 1
 
     def test_ignores_future_sets(self):
         plan = _make_plan([9, 10, 11])
