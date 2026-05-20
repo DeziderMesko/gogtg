@@ -87,3 +87,4 @@ class AppState:
     today_plan: DayPlan | None
     completed_sets_today: list[CompletedSet] = field(default_factory=list)
     last_calibration_cycle: int = 0
+    plan_date: str | None = None  # datum posledního rolloveru, i pro REST dny

@@ -129,6 +129,7 @@ def _ser_state(state: AppState) -> dict:
         "today_plan": _ser_day_plan(state.today_plan) if state.today_plan else None,
         "completed_sets_today": [_ser_completed_set(s) for s in state.completed_sets_today],
         "last_calibration_cycle": state.last_calibration_cycle,
+        "plan_date": state.plan_date,
     }
 
 
@@ -141,6 +142,7 @@ def _deser_state(d: dict, tz: ZoneInfo) -> AppState:
             _deser_completed_set(s, tz) for s in d.get("completed_sets_today", [])
         ],
         last_calibration_cycle=d.get("last_calibration_cycle", 0),
+        plan_date=d.get("plan_date"),
     )
 
 

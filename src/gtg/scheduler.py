@@ -122,10 +122,11 @@ class GTGScheduler:
             logger.warning("state.json nenalezen — sety se nenaplánují")
             return
         today = date.today()
-        if state.today_plan is None:
+        last_str = state.plan_date or (state.today_plan.date if state.today_plan else None)
+        if last_str is None:
             self._rollover(today)
             return
-        last = date.fromisoformat(state.today_plan.date)
+        last = date.fromisoformat(last_str)
         if last == today:
             return
         missed = (today - last).days
@@ -168,6 +169,7 @@ class GTGScheduler:
             state.today_plan = plan_day(target, day_type, state.max_reps, self.config, self.tz)
             logger.info("%s: nový plán %s, %d setů", target, day_type, len(state.today_plan.sets))
 
+        state.plan_date = target.isoformat()
         save_state(state, self.state_path)
 
         if needs_recalibration(state, self.config):
