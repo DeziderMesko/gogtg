@@ -122,12 +122,31 @@ class GTGScheduler:
             logger.warning("state.json nenalezen — sety se nenaplánují")
             return
         today = date.today()
-        last_str = state.plan_date or (state.today_plan.date if state.today_plan else None)
-        if last_str is None:
+
+        # Fast path: plán je aktuální
+        if state.today_plan and state.today_plan.date == today.isoformat():
+            return
+        if state.plan_date == today.isoformat():
+            return  # REST den — rollover dnes už proběhl
+
+        # Urči datum posledního rolloveru
+        if state.plan_date:
+            last = date.fromisoformat(state.plan_date)
+        elif state.today_plan:
+            last = date.fromisoformat(state.today_plan.date)
+        else:
+            # Stará state.json bez plan_date, today_plan=None (REST nebo první spuštění).
+            # Zkontroluj cycle_position: pokud říká REST, rollover proběhl — jen orazítkuj.
+            day_type = day_type_for_position(state.cycle_position, self.config)
+            if day_type == DayType.REST:
+                logger.info("Stará state.json, REST den — razítkuji plan_date bez rolloveru")
+                state.plan_date = today.isoformat()
+                save_state(state, self.state_path)
+                return
             self._rollover(today)
             return
-        last = date.fromisoformat(last_str)
-        if last == today:
+
+        if last >= today:
             return
         missed = (today - last).days
         if missed > 1:
