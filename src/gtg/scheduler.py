@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -121,14 +121,25 @@ class GTGScheduler:
         if state is None:
             logger.warning("state.json nenalezen — sety se nenaplánují")
             return
-        today = date.today().isoformat()
-        if state.today_plan is None or state.today_plan.date != today:
-            self._rollover()
+        today = date.today()
+        if state.today_plan is None:
+            self._rollover(today)
+            return
+        last = date.fromisoformat(state.today_plan.date)
+        if last == today:
+            return
+        missed = (today - last).days
+        if missed > 1:
+            logger.info("Zmeškáno %d dní — dohánění rolloveru", missed)
+        for i in range(1, missed + 1):
+            self._rollover(last + timedelta(days=i))
 
-    def _rollover(self) -> None:
+    def _rollover(self, for_date: date | None = None) -> None:
         state = load_state(self.state_path, self.tz)
         if state is None:
             return
+
+        target = for_date or date.today()
 
         if state.today_plan is not None and not state.today_plan.skipped:
             done_indices = {cs.index for cs in state.completed_sets_today if cs.completed}
@@ -148,26 +159,26 @@ class GTGScheduler:
         state.completed_sets_today = []
         state.cycle_position = advance_cycle(state.cycle_position, self.config)
 
-        today = date.today()
         day_type = day_type_for_position(state.cycle_position, self.config)
 
         if day_type == DayType.REST:
             state.today_plan = None
-            logger.info("Dnešek je REST den")
+            logger.info("%s: REST den", target)
         else:
-            state.today_plan = plan_day(today, day_type, state.max_reps, self.config, self.tz)
-            logger.info("Nový plán: %s, %d setů", day_type, len(state.today_plan.sets))
+            state.today_plan = plan_day(target, day_type, state.max_reps, self.config, self.tz)
+            logger.info("%s: nový plán %s, %d setů", target, day_type, len(state.today_plan.sets))
 
         save_state(state, self.state_path)
 
         if needs_recalibration(state, self.config):
             self.notifier.send_calibration_reminder()
 
-        if state.today_plan:
+        if state.today_plan and target == date.today():
             self._cancel_set_jobs()
             self._schedule_sets(state.today_plan)
 
-        self._regenerate_overview()
+        if target == date.today():
+            self._regenerate_overview()
 
     def _schedule_today_sets(self) -> None:
         state = load_state(self.state_path, self.tz)
@@ -186,6 +197,12 @@ class GTGScheduler:
             self._rollover,
             trigger=CronTrigger(hour=0, minute=1, timezone=self.tz),
             id=_ROLLOVER_JOB_ID,
+            replace_existing=True,
+        )
+        self._sched.add_job(
+            self._ensure_today_plan,
+            trigger=CronTrigger(minute="*/5", timezone=self.tz),
+            id="gtg_watchdog",
             replace_existing=True,
         )
 
