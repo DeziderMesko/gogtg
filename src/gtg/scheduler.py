@@ -99,6 +99,7 @@ class GTGScheduler:
             total=payload["total"],
             scheduled_at=datetime.fromisoformat(payload["scheduled_at"]),
             reps=payload["reps"],
+            snoozed=payload.get("snoozed", False),
         )
         self.notifier.send_set_notification(planned_set)
 
@@ -115,6 +116,7 @@ class GTGScheduler:
                 "total": s.total,
                 "scheduled_at": s.scheduled_at.isoformat(),
                 "reps": s.reps,
+                "snoozed": s.snoozed,
             }
             self._sched.add_job(
                 self._fire_notification,

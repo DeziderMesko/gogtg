@@ -153,6 +153,7 @@ def reschedule_remaining(
             total=total,
             scheduled_at=t,
             reps=reps,
+            snoozed=True,
         )
         for i, t in enumerate(times)
     ]

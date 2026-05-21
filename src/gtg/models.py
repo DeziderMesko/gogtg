@@ -47,6 +47,7 @@ class PlannedSet:
     total: int
     scheduled_at: datetime
     reps: dict[str, int]
+    snoozed: bool = False
 
 
 @dataclass

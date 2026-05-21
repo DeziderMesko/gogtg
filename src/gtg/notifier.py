@@ -44,7 +44,9 @@ class Notifier:
 
     def send_set_notification(self, planned_set: PlannedSet) -> None:
         reps = self._reps_label(planned_set)
-        message = f"GTG set #{planned_set.index} of {planned_set.total}. {reps}."
+        time_str = planned_set.scheduled_at.strftime("%H:%M")
+        prefix = f"Snooze {time_str}" if planned_set.snoozed else time_str
+        message = f"{prefix} GTG set #{planned_set.index} of {planned_set.total}. {reps}."
         self._post(
             message,
             {
