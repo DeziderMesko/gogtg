@@ -242,7 +242,7 @@ def _actions_cell(row: DayRow, snooze_options: list[int]) -> str:
         return f'<button class="act" disabled>{label}</button>'
 
     si = row.next_set_index
-    parts = [btn("Done", "/callback/done")]
+    parts = [btn("Done", f"/callback/done?set={si}", si is not None)]
     for m in snooze_options:
         parts.append(btn(f"Snooze {m}", f"/callback/snooze?set={si}&minutes={m}", si is not None))
     parts.append(btn("Skip day", "/callback/skip"))
