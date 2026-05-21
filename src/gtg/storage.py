@@ -49,6 +49,39 @@ def load_config(path: Path) -> Config:
     )
 
 
+def save_config(path: Path, config: Config) -> None:
+    raw = {
+        "window": {
+            "start": config.window.start.strftime("%H:%M"),
+            "end": config.window.end.strftime("%H:%M"),
+            "max_extension_hours": config.window.max_extension_hours,
+        },
+        "scheduling": {
+            "min_gap_minutes": config.min_gap_minutes,
+            "daily_reps_target": {
+                "min": config.daily_reps_target_min,
+                "max": config.daily_reps_target_max,
+            },
+        },
+        "cycle": {
+            "work_days": config.work_days,
+            "rest_days": config.rest_days,
+            "recalibrate_after_cycles": config.recalibrate_after_cycles,
+        },
+        "snooze_options_minutes": config.snooze_options_minutes,
+        "ntfy": {
+            "base_url": config.ntfy_base_url,
+            "topic": config.ntfy_topic,
+        },
+        "exercises": [{"id": e.id, "name": e.name, "unit": e.unit} for e in config.exercises],
+        "timezone": config.timezone,
+    }
+    tmp = path.with_suffix(".tmp")
+    with open(tmp, "w") as f:
+        yaml.dump(raw, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+    tmp.replace(path)
+
+
 # ── Serializace / deserializace ────────────────────────────────────────────────
 
 

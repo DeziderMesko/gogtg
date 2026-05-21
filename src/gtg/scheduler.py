@@ -9,7 +9,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 
-from gtg.models import CompletedSet, Config, DayPlan, DayType
+from gtg.models import CompletedSet, Config, DayPlan, DayType, MaxReps
 from gtg.notifier import Notifier
 from gtg.scheduling import (
     advance_cycle,
@@ -206,6 +206,31 @@ class GTGScheduler:
         if state and state.today_plan:
             self._schedule_sets(state.today_plan)
 
+    def apply_config(self, new_config: Config, new_max_reps: MaxReps, calibrate: bool) -> None:
+        self.config = new_config
+        self.notifier.config = new_config
+
+        state = load_state(self.state_path, self.tz)
+        if state is None:
+            return
+
+        state.max_reps = new_max_reps
+        if calibrate:
+            state.last_calibration_cycle = state.cycle_position.cycle_number
+
+        if state.today_plan and calibrate:
+            today = date.today()
+            state.today_plan = plan_day(
+                today, state.today_plan.day_type, new_max_reps, new_config, self.tz
+            )
+            save_state(state, self.state_path)
+            self._cancel_set_jobs()
+            self._schedule_sets(state.today_plan)
+        else:
+            save_state(state, self.state_path)
+
+        self._regenerate_overview()
+
     def _regenerate_overview(self) -> None:
         if self.overview_path is None:
             return
@@ -257,12 +282,14 @@ def main() -> None:
 
     ctx = AppContext(
         config=config,
+        config_path=config_path,
         state_path=state_path,
         data_dir=data_dir,
         tz=tz,
         notifier=notifier,
         reschedule_fn=gtg.reschedule,
         cancel_today_fn=gtg.cancel_today,
+        apply_config_fn=gtg.apply_config,
         overview_path=overview_path,
     )
     app = create_app(ctx)

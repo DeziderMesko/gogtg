@@ -72,12 +72,14 @@ def ctx(tmp_path: Path) -> AppContext:
     notifier = MagicMock(spec=Notifier)
     return AppContext(
         config=make_config(),
+        config_path=tmp_path / "config.yaml",
         state_path=tmp_path / "state.json",
         data_dir=tmp_path,
         tz=TZ,
         notifier=notifier,
         reschedule_fn=MagicMock(),
         cancel_today_fn=MagicMock(),
+        apply_config_fn=MagicMock(),
     )
 
 
