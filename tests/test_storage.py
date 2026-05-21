@@ -215,7 +215,10 @@ class TestAppendHistory:
 
     def test_creates_history_file(self, tmp_path):
         append_history(
-            self._record(datetime(2026, 5, 13, 8, 5, tzinfo=TZ)), DayType.MEDIUM, "2026-05-13", tmp_path
+            self._record(datetime(2026, 5, 13, 8, 5, tzinfo=TZ)),
+            DayType.MEDIUM,
+            "2026-05-13",
+            tmp_path,
         )
         assert (tmp_path / "history" / "2026-05.jsonl").exists()
 
@@ -228,15 +231,26 @@ class TestAppendHistory:
 
     def test_separate_files_per_month(self, tmp_path):
         append_history(
-            self._record(datetime(2026, 5, 31, 20, 0, tzinfo=TZ)), DayType.HEAVY, "2026-05-31", tmp_path
+            self._record(datetime(2026, 5, 31, 20, 0, tzinfo=TZ)),
+            DayType.HEAVY,
+            "2026-05-31",
+            tmp_path,
         )
-        append_history(self._record(datetime(2026, 6, 1, 8, 0, tzinfo=TZ)), DayType.LIGHT, "2026-06-01", tmp_path)
+        append_history(
+            self._record(datetime(2026, 6, 1, 8, 0, tzinfo=TZ)),
+            DayType.LIGHT,
+            "2026-06-01",
+            tmp_path,
+        )
         assert (tmp_path / "history" / "2026-05.jsonl").exists()
         assert (tmp_path / "history" / "2026-06.jsonl").exists()
 
     def test_each_line_is_valid_json(self, tmp_path):
         append_history(
-            self._record(datetime(2026, 5, 13, 8, 5, tzinfo=TZ)), DayType.MEDIUM, "2026-05-13", tmp_path
+            self._record(datetime(2026, 5, 13, 8, 5, tzinfo=TZ)),
+            DayType.MEDIUM,
+            "2026-05-13",
+            tmp_path,
         )
         lines = (tmp_path / "history" / "2026-05.jsonl").read_text().strip().splitlines()
         for line in lines:

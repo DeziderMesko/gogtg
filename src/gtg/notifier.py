@@ -26,10 +26,11 @@ class Notifier:
         base = self.callback_base_url.rstrip("/")
         idx = planned_set.index
         snooze = self.config.snooze_options_minutes[0]
+        snooze_url = f"{base}/callback/snooze?set={idx}&minutes={snooze}"
         return "; ".join(
             [
                 f"http, Done, {base}/callback/done?set={idx}, method=POST, clear=true",
-                f"http, Snooze {snooze}, {base}/callback/snooze?set={idx}&minutes={snooze}, method=POST, clear=true",
+                f"http, Snooze {snooze}, {snooze_url}, method=POST, clear=true",
                 f"http, Skip day, {base}/callback/skip, method=POST, clear=true",
             ]
         )

@@ -1,4 +1,4 @@
-from datetime import datetime, time, timezone
+from datetime import datetime, time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 
 from gtg.models import (
     AppState,
-    CompletedSet,
     Config,
     CyclePosition,
     DayPlan,
@@ -96,7 +95,9 @@ def client(ctx: AppContext, tmp_path: Path) -> TestClient:
 
 
 @patch("gtg.server.datetime")
-def test_done_records_nearest_past_set(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+def test_done_records_nearest_past_set(
+    mock_dt: MagicMock, client: TestClient, ctx: AppContext
+) -> None:
     # NOW=10:00; sets at 9:00 (idx 1), 10:00 (idx 2), 11:00 (idx 3)
     # nearest past uncompleted = set 2 (scheduled_at=10:00, closest to now)
     mock_dt.now.return_value = NOW
@@ -132,7 +133,9 @@ def test_done_no_past_sets_returns_404(mock_dt: MagicMock, client: TestClient) -
 
 
 @patch("gtg.server.datetime")
-def test_done_with_set_index_completes_future_set(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+def test_done_with_set_index_completes_future_set(
+    mock_dt: MagicMock, client: TestClient, ctx: AppContext
+) -> None:
     # set 3 is at 11:00, NOW=10:00 — future, but explicit index allows completing it
     mock_dt.now.return_value = NOW
     resp = client.post("/callback/done?set=3")
@@ -142,7 +145,9 @@ def test_done_with_set_index_completes_future_set(mock_dt: MagicMock, client: Te
 
 
 @patch("gtg.server.datetime")
-def test_done_with_set_index_already_done_returns_404(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+def test_done_with_set_index_already_done_returns_404(
+    mock_dt: MagicMock, client: TestClient, ctx: AppContext
+) -> None:
     mock_dt.now.return_value = NOW
     client.post("/callback/done?set=1")
     resp = client.post("/callback/done?set=1")
@@ -163,7 +168,9 @@ def test_done_no_plan_returns_404(ctx: AppContext, tmp_path: Path) -> None:
 
 
 @patch("gtg.server.datetime")
-def test_snooze_calls_reschedule_fn(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+def test_snooze_calls_reschedule_fn(
+    mock_dt: MagicMock, client: TestClient, ctx: AppContext
+) -> None:
     mock_dt.now.return_value = NOW
     resp = client.post("/callback/snooze?set=2&minutes=15")
     assert resp.status_code == 200

@@ -283,7 +283,8 @@ def _row_html(row: DayRow, is_today: bool, snooze_options: list[int]) -> str:
 
 
 _CSS = """
-  body{font-family:sans-serif;font-size:.9rem;padding:1rem 2rem;background:#fff;color:#111;max-width:700px}
+  body{font-family:sans-serif;font-size:.9rem;padding:1rem 2rem;
+  background:#fff;color:#111;max-width:700px}
   h1{font-size:.9rem;font-weight:bold;margin-bottom:1rem}
   table{border-collapse:collapse}
   td{padding:.15rem .55rem;vertical-align:middle;white-space:nowrap;font-size:.9rem}
@@ -300,7 +301,8 @@ _CSS = """
   .dash{color:#ccc}
   .reps{font-variant-numeric:tabular-nums;cursor:help;color:#555}
   .actions{padding-left:.8rem}
-  .act{font-size:.8rem;padding:.1rem .4rem;margin-right:.2rem;cursor:pointer;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#333}
+  .act{font-size:.8rem;padding:.1rem .4rem;margin-right:.2rem;cursor:pointer;
+  border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#333}
   .act:hover:not(:disabled){background:#e8e8e8}
   .act:disabled{color:#bbb;cursor:default}
   .legend{margin-top:1.5rem;color:#999;font-size:.85rem}

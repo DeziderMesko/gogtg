@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -32,7 +32,7 @@ def make_planned_set() -> PlannedSet:
     return PlannedSet(
         index=2,
         total=5,
-        scheduled_at=datetime(2026, 5, 13, 10, 0, tzinfo=timezone.utc),
+        scheduled_at=datetime(2026, 5, 13, 10, 0, tzinfo=UTC),
         reps={"oap": 3, "ols": 2, "pullup": 1},
     )
 

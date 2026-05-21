@@ -18,7 +18,7 @@ from gtg.models import (
     WindowConfig,
 )
 from gtg.notifier import Notifier
-from gtg.scheduler import GTGScheduler, _SET_JOB_PREFIX
+from gtg.scheduler import _SET_JOB_PREFIX, GTGScheduler
 from gtg.storage import save_state
 
 TZ = ZoneInfo("Europe/Prague")
@@ -226,9 +226,7 @@ def test_rollover_clears_completed_sets(sched_instance: GTGScheduler, tmp_path: 
     assert loaded.completed_sets_today == []
 
 
-def test_rollover_sends_calibration_when_due(
-    sched_instance: GTGScheduler, tmp_path: Path
-) -> None:
+def test_rollover_sends_calibration_when_due(sched_instance: GTGScheduler, tmp_path: Path) -> None:
     # recalibrate_after_cycles=2, last_calibration_cycle=0, cycle_number=1
     # po advance: cycle_number=2 → needs_recalibration = True
     state = make_state(cycle_number=1)
@@ -239,9 +237,7 @@ def test_rollover_sends_calibration_when_due(
     sched_instance.notifier.send_calibration_reminder.assert_called_once()
 
 
-def test_rollover_no_calibration_when_not_due(
-    sched_instance: GTGScheduler, tmp_path: Path
-) -> None:
+def test_rollover_no_calibration_when_not_due(sched_instance: GTGScheduler, tmp_path: Path) -> None:
     state = make_state(cycle_number=0)
     state.cycle_position = CyclePosition(cycle_number=0, day_in_cycle=2)
     state.last_calibration_cycle = 0

@@ -3,8 +3,6 @@ from datetime import date, datetime, time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import pytest
-
 from gtg.models import (
     AppState,
     CompletedSet,
@@ -72,12 +70,39 @@ def test_read_history_groups_by_date(tmp_path: Path) -> None:
     history_dir = tmp_path / "history"
     history_dir.mkdir()
     lines = [
-        json.dumps({"date": "2026-05-10", "time": "09:00:00", "set_index": 1, "set_total": 3,
-                    "planned_reps": {"oap": 3, "ols": 2, "pullup": 1}, "completed": True, "day_type": "medium"}),
-        json.dumps({"date": "2026-05-10", "time": "10:00:00", "set_index": 2, "set_total": 3,
-                    "planned_reps": {"oap": 3, "ols": 2, "pullup": 1}, "completed": True, "day_type": "medium"}),
-        json.dumps({"date": "2026-05-11", "time": "09:00:00", "set_index": 1, "set_total": 2,
-                    "planned_reps": {"oap": 3, "ols": 2, "pullup": 1}, "completed": False, "day_type": "light"}),
+        json.dumps(
+            {
+                "date": "2026-05-10",
+                "time": "09:00:00",
+                "set_index": 1,
+                "set_total": 3,
+                "planned_reps": {"oap": 3, "ols": 2, "pullup": 1},
+                "completed": True,
+                "day_type": "medium",
+            }
+        ),
+        json.dumps(
+            {
+                "date": "2026-05-10",
+                "time": "10:00:00",
+                "set_index": 2,
+                "set_total": 3,
+                "planned_reps": {"oap": 3, "ols": 2, "pullup": 1},
+                "completed": True,
+                "day_type": "medium",
+            }
+        ),
+        json.dumps(
+            {
+                "date": "2026-05-11",
+                "time": "09:00:00",
+                "set_index": 1,
+                "set_total": 2,
+                "planned_reps": {"oap": 3, "ols": 2, "pullup": 1},
+                "completed": False,
+                "day_type": "light",
+            }
+        ),
     ]
     (history_dir / "2026-05.jsonl").write_text("\n".join(lines))
     result = _read_history(tmp_path, 2026, 5)
@@ -96,10 +121,24 @@ def test_day_from_history_no_records() -> None:
 
 def test_day_from_history_all_done() -> None:
     records = [
-        {"date": "2026-05-10", "time": "09:05:00", "set_index": 1, "set_total": 2,
-         "planned_reps": {"oap": 3, "ols": 2, "pullup": 1}, "completed": True, "day_type": "medium"},
-        {"date": "2026-05-10", "time": "10:05:00", "set_index": 2, "set_total": 2,
-         "planned_reps": {"oap": 3, "ols": 2, "pullup": 1}, "completed": True, "day_type": "medium"},
+        {
+            "date": "2026-05-10",
+            "time": "09:05:00",
+            "set_index": 1,
+            "set_total": 2,
+            "planned_reps": {"oap": 3, "ols": 2, "pullup": 1},
+            "completed": True,
+            "day_type": "medium",
+        },
+        {
+            "date": "2026-05-10",
+            "time": "10:05:00",
+            "set_index": 2,
+            "set_total": 2,
+            "planned_reps": {"oap": 3, "ols": 2, "pullup": 1},
+            "completed": True,
+            "day_type": "medium",
+        },
     ]
     row = _day_from_history(date(2026, 5, 10), records, make_config())
     assert row.day_type == DayType.MEDIUM
@@ -110,8 +149,15 @@ def test_day_from_history_all_done() -> None:
 
 def test_day_from_history_partial() -> None:
     records = [
-        {"date": "2026-05-10", "time": "09:00:00", "set_index": 1, "set_total": 3,
-         "planned_reps": {"oap": 3, "ols": 2, "pullup": 1}, "completed": True, "day_type": "heavy"},
+        {
+            "date": "2026-05-10",
+            "time": "09:00:00",
+            "set_index": 1,
+            "set_total": 3,
+            "planned_reps": {"oap": 3, "ols": 2, "pullup": 1},
+            "completed": True,
+            "day_type": "heavy",
+        },
     ]
     row = _day_from_history(date(2026, 5, 10), records, make_config())
     assert len(row.sets) == 3
@@ -122,8 +168,15 @@ def test_day_from_history_partial() -> None:
 
 def test_day_from_history_reps_label() -> None:
     records = [
-        {"date": "2026-05-10", "time": "09:00:00", "set_index": 1, "set_total": 1,
-         "planned_reps": {"oap": 3, "ols": 2, "pullup": 1}, "completed": True, "day_type": "light"},
+        {
+            "date": "2026-05-10",
+            "time": "09:00:00",
+            "set_index": 1,
+            "set_total": 1,
+            "planned_reps": {"oap": 3, "ols": 2, "pullup": 1},
+            "completed": True,
+            "day_type": "light",
+        },
     ]
     row = _day_from_history(date(2026, 5, 10), records, make_config())
     assert row.reps_label == "3/2/1"
@@ -145,8 +198,18 @@ def test_day_today_shows_planned_sets() -> None:
         date="2026-05-13",
         day_type=DayType.MEDIUM,
         sets=[
-            PlannedSet(index=1, total=2, scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-            PlannedSet(index=2, total=2, scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(
+                index=1,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
         ],
     )
     state = make_state(plan=plan)
@@ -161,14 +224,25 @@ def test_day_today_marks_completed() -> None:
         date="2026-05-13",
         day_type=DayType.MEDIUM,
         sets=[
-            PlannedSet(index=1, total=2, scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-            PlannedSet(index=2, total=2, scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(
+                index=1,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
         ],
     )
     state = make_state(plan=plan)
     state.completed_sets_today = [
         CompletedSet(
-            index=1, total=2,
+            index=1,
+            total=2,
             scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ),
             completed_at=datetime(2026, 5, 13, 9, 5, tzinfo=TZ),
             reps={"oap": 3, "ols": 2, "pullup": 1},
@@ -185,8 +259,18 @@ def test_day_today_marks_completed_from_history() -> None:
         date="2026-05-13",
         day_type=DayType.MEDIUM,
         sets=[
-            PlannedSet(index=1, total=2, scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-            PlannedSet(index=2, total=2, scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(
+                index=1,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
         ],
     )
     state = make_state(plan=plan)
@@ -202,9 +286,24 @@ def test_day_today_next_notify_highlights_nearest_future_set() -> None:
         date="2099-06-01",
         day_type=DayType.MEDIUM,
         sets=[
-            PlannedSet(index=1, total=3, scheduled_at=datetime(2099, 6, 1, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-            PlannedSet(index=2, total=3, scheduled_at=datetime(2099, 6, 1, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-            PlannedSet(index=3, total=3, scheduled_at=datetime(2099, 6, 1, 13, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(
+                index=1,
+                total=3,
+                scheduled_at=datetime(2099, 6, 1, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=3,
+                scheduled_at=datetime(2099, 6, 1, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=3,
+                total=3,
+                scheduled_at=datetime(2099, 6, 1, 13, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
         ],
     )
     state = make_state(plan=plan)
@@ -219,15 +318,25 @@ def test_day_today_next_notify_skips_done_sets() -> None:
         date="2099-06-01",
         day_type=DayType.MEDIUM,
         sets=[
-            PlannedSet(index=1, total=2, scheduled_at=datetime(2099, 6, 1, 9, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
-            PlannedSet(index=2, total=2, scheduled_at=datetime(2099, 6, 1, 11, 0, tzinfo=TZ), reps={"oap": 3, "ols": 2, "pullup": 1}),
+            PlannedSet(
+                index=1,
+                total=2,
+                scheduled_at=datetime(2099, 6, 1, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=2,
+                scheduled_at=datetime(2099, 6, 1, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
         ],
     )
     state = make_state(plan=plan)
     hist = [{"set_index": 1, "completed": True}]
     row = _day_today(date(2099, 6, 1), state, make_config(), TZ, hist)
     assert row.sets[0].next_notify is False  # hotovo
-    assert row.sets[1].next_notify is True   # první nesplněný budoucí
+    assert row.sets[1].next_notify is True  # první nesplněný budoucí
 
 
 # ── _day_future ────────────────────────────────────────────────────────────────
