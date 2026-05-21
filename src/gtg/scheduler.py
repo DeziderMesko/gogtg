@@ -68,6 +68,14 @@ class GTGScheduler:
     def cancel_today(self) -> None:
         self._cancel_set_jobs()
 
+    def cancel_set(self, plan_date: str, index: int) -> None:
+        import contextlib
+
+        from apscheduler.jobstores.base import JobLookupError as ApsJobLookupError
+
+        with contextlib.suppress(ApsJobLookupError):
+            self._sched.remove_job(self._job_id(plan_date, index))
+
     # ── Interní logika ────────────────────────────────────────────────────────
 
     def _job_id(self, plan_date: str, index: int) -> str:
@@ -289,6 +297,7 @@ def main() -> None:
         notifier=notifier,
         reschedule_fn=gtg.reschedule,
         cancel_today_fn=gtg.cancel_today,
+        cancel_set_fn=gtg.cancel_set,
         apply_config_fn=gtg.apply_config,
         overview_path=overview_path,
     )

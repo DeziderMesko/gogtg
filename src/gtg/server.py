@@ -24,6 +24,7 @@ class AppContext:
     notifier: Notifier
     reschedule_fn: Callable[[DayPlan], None]
     cancel_today_fn: Callable[[], None]
+    cancel_set_fn: Callable[[str, int], None]
     apply_config_fn: Callable[[Config, MaxReps, bool], None]
     overview_path: Path | None = None  # None = overview generation disabled
 
@@ -53,9 +54,16 @@ def create_app(ctx: AppContext) -> FastAPI:
         plan = state.today_plan
         now = datetime.now(ctx.tz)
         done_indices = {cs.index for cs in state.completed_sets_today if cs.completed}
-        planned = nearest_past_uncompleted(plan, done_indices, now)
-        if planned is None:
-            raise HTTPException(404, "No uncompleted past set found")
+
+        if set is not None:
+            planned = next((s for s in plan.sets if s.index == set), None)
+            if planned is None or planned.index in done_indices:
+                raise HTTPException(404, "Set not found or already completed")
+            ctx.cancel_set_fn(plan.date, set)
+        else:
+            planned = nearest_past_uncompleted(plan, done_indices, now)
+            if planned is None:
+                raise HTTPException(404, "No uncompleted past set found")
 
         completed = CompletedSet(
             index=planned.index,
@@ -193,6 +201,10 @@ input{width:100%;box-sizing:border-box;padding:.35rem .5rem;border:1px solid #cc
 .btn{padding:.5rem 1.4rem;border:1px solid #ccc;border-radius:3px;cursor:pointer;
      font-size:.92rem;background:#f5f5f5;color:#333}
 .btn-primary{background:#4a90d9;color:#fff;border-color:#3a7bc8}
+.topbar{display:flex;align-items:baseline;justify-content:space-between}
+.nav-btn{font-size:.8rem;padding:.2rem .6rem;border:1px solid #ccc;border-radius:3px;
+         background:#f5f5f5;color:#333;text-decoration:none}
+.nav-btn:hover{background:#e8e8e8}
 """.strip()
 
 
@@ -260,7 +272,8 @@ def _render_config_form(c: Config, max_reps: MaxReps, snooze: str) -> str:
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         '<meta charset="UTF-8">\n<title>GTG — Config</title>\n'
         f"<style>\n{_CONFIG_CSS}\n</style>\n</head>\n<body>\n"
-        "<h1>GTG — Configuration</h1>\n"
+        '<div class="topbar"><h1>GTG — Configuration</h1>'
+        '<a class="nav-btn" href="/overview">Overview</a></div>\n'
         f'<form method="post" action="/config">\n{body}\n</form>\n'
         "</body>\n</html>\n"
     )

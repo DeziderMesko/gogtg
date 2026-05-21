@@ -79,6 +79,7 @@ def ctx(tmp_path: Path) -> AppContext:
         notifier=notifier,
         reschedule_fn=MagicMock(),
         cancel_today_fn=MagicMock(),
+        cancel_set_fn=MagicMock(),
         apply_config_fn=MagicMock(),
     )
 
@@ -127,6 +128,24 @@ def test_done_no_past_sets_returns_404(mock_dt: MagicMock, client: TestClient) -
     # before first set (8:00), no past uncompleted set exists
     mock_dt.now.return_value = datetime(2026, 5, 13, 7, 0, tzinfo=TZ)
     resp = client.post("/callback/done")
+    assert resp.status_code == 404
+
+
+@patch("gtg.server.datetime")
+def test_done_with_set_index_completes_future_set(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+    # set 3 is at 11:00, NOW=10:00 — future, but explicit index allows completing it
+    mock_dt.now.return_value = NOW
+    resp = client.post("/callback/done?set=3")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "ok", "set": 3}
+    ctx.cancel_set_fn.assert_called_once_with("2026-05-13", 3)
+
+
+@patch("gtg.server.datetime")
+def test_done_with_set_index_already_done_returns_404(mock_dt: MagicMock, client: TestClient, ctx: AppContext) -> None:
+    mock_dt.now.return_value = NOW
+    client.post("/callback/done?set=1")
+    resp = client.post("/callback/done?set=1")
     assert resp.status_code == 404
 
 

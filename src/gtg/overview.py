@@ -11,8 +11,19 @@ from gtg.storage import load_state
 
 _DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 _MONTH = [
-    "", "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ]
 _TYPE_LABEL = {
     DayType.LIGHT: "Light",
@@ -114,11 +125,13 @@ def _day_today(
         if ps.index in done_by_idx:
             sets.append(SetStatus(tooltip=f"{t} — done", done=True))
         else:
-            sets.append(SetStatus(
-                tooltip=f"{t} — scheduled",
-                done=False,
-                next_notify=(ps.index == next_idx),
-            ))
+            sets.append(
+                SetStatus(
+                    tooltip=f"{t} — scheduled",
+                    done=False,
+                    next_notify=(ps.index == next_idx),
+                )
+            )
 
     return DayRow(
         date=d,
@@ -258,14 +271,14 @@ def _row_html(row: DayRow, is_today: bool, snooze_options: list[int]) -> str:
     actions_cell = _actions_cell(row, snooze_options) if is_today else "<td></td>"
 
     return (
-        f'  <tr{bold}>\n'
+        f"  <tr{bold}>\n"
         f'    <td class="dow">{day_abbrev}</td>\n'
         f'    <td class="dnum">{day_num}</td>\n'
-        f'    <td>{type_cell}</td>\n'
+        f"    <td>{type_cell}</td>\n"
         f'    <td class="squares">{sets_cell}</td>\n'
-        f'    <td>{reps_cell}</td>\n'
-        f'    {actions_cell}\n'
-        f'  </tr>'
+        f"    <td>{reps_cell}</td>\n"
+        f"    {actions_cell}\n"
+        f"  </tr>"
     )
 
 
@@ -294,6 +307,11 @@ _CSS = """
   .legend span{margin-right:1rem}
   .legend .sq{color:#111}
   .legend .sq.next{color:#aaa}
+  .topbar{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem}
+  .topbar h1{margin-bottom:0}
+  .nav-btn{font-size:.8rem;padding:.2rem .6rem;border:1px solid #ccc;border-radius:3px;
+    background:#f5f5f5;color:#333;text-decoration:none}
+  .nav-btn:hover{background:#e8e8e8}
 """.strip()
 
 
@@ -304,14 +322,16 @@ def render_html(rows: list[DayRow], year: int, month: int, snooze_options: list[
     return (
         f'<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         f'<meta charset="UTF-8">\n<title>GTG — {title}</title>\n'
-        f'<style>\n{_CSS}\n</style>\n</head>\n<body>\n'
-        f'<h1>{title}</h1>\n<table>\n{rows_html}\n</table>\n'
+        f"<style>\n{_CSS}\n</style>\n</head>\n<body>\n"
+        f'<div class="topbar"><h1>{title}</h1>'
+        f'<a class="nav-btn" href="/config">Config</a></div>\n'
+        f"<table>\n{rows_html}\n</table>\n"
         f'<div class="legend">'
         f'<span><span class="sq">■</span> Done</span>'
         f'<span><span class="sq next">■</span> Next</span>'
-        f'<span>□ Scheduled / missed</span>'
-        f'</div>\n'
-        f'</body>\n</html>\n'
+        f"<span>□ Scheduled / missed</span>"
+        f"</div>\n"
+        f"</body>\n</html>\n"
     )
 
 

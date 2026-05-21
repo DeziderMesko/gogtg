@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import httpx
 
-from gtg.models import Config, Exercise, PlannedSet
+from gtg.models import Config, PlannedSet
 
 
 @dataclass
@@ -26,11 +26,13 @@ class Notifier:
         base = self.callback_base_url.rstrip("/")
         idx = planned_set.index
         snooze = self.config.snooze_options_minutes[0]
-        return "; ".join([
-            f"http, Done, {base}/callback/done, method=POST, clear=true",
-            f"http, Snooze {snooze}, {base}/callback/snooze?set={idx}&minutes={snooze}, method=POST, clear=true",
-            f"http, Skip day, {base}/callback/skip, method=POST, clear=true",
-        ])
+        return "; ".join(
+            [
+                f"http, Done, {base}/callback/done?set={idx}, method=POST, clear=true",
+                f"http, Snooze {snooze}, {base}/callback/snooze?set={idx}&minutes={snooze}, method=POST, clear=true",
+                f"http, Skip day, {base}/callback/skip, method=POST, clear=true",
+            ]
+        )
 
     def _post(self, message: str, headers: dict[str, str]) -> None:
         with httpx.Client(timeout=10) as client:
@@ -43,12 +45,15 @@ class Notifier:
     def send_set_notification(self, planned_set: PlannedSet) -> None:
         reps = self._reps_label(planned_set)
         message = f"GTG set #{planned_set.index} of {planned_set.total}. {reps}."
-        self._post(message, {
-            "Title": "GTG Reminder",
-            "Priority": "default",
-            "Tags": "muscle",
-            "Actions": self._actions_header(planned_set),
-        })
+        self._post(
+            message,
+            {
+                "Title": "GTG Reminder",
+                "Priority": "default",
+                "Tags": "muscle",
+                "Actions": self._actions_header(planned_set),
+            },
+        )
 
     def send_calibration_reminder(self) -> None:
         self._post(
