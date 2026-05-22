@@ -91,20 +91,25 @@ def _parse_dt(s: str, tz: ZoneInfo) -> datetime:
 
 
 def _ser_planned_set(s: PlannedSet) -> dict:
-    return {
+    d: dict = {
         "index": s.index,
         "total": s.total,
         "scheduled_at": s.scheduled_at.isoformat(),
         "reps": s.reps,
     }
+    if s.original_scheduled_at is not None:
+        d["original_scheduled_at"] = s.original_scheduled_at.isoformat()
+    return d
 
 
 def _deser_planned_set(d: dict, tz: ZoneInfo) -> PlannedSet:
+    orig = d.get("original_scheduled_at")
     return PlannedSet(
         index=d["index"],
         total=d["total"],
         scheduled_at=_parse_dt(d["scheduled_at"], tz),
         reps=d["reps"],
+        original_scheduled_at=_parse_dt(orig, tz) if orig else None,
     )
 
 

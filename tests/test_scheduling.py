@@ -270,6 +270,22 @@ class TestRescheduleRemaining:
         # total v done setech musí odpovídat novému celkovému počtu
         assert all(s.total == len(result.sets) for s in result.sets)
 
+    def test_original_scheduled_at_preserved_on_first_snooze(self, config, max_reps):
+        plan = self._plan(config, max_reps)
+        original_first = plan.sets[0].scheduled_at
+        now = datetime(2026, 5, 13, 8, 0, tzinfo=TZ)
+        result = reschedule_remaining(1, 15, plan, config, now)
+        assert result.sets[0].original_scheduled_at == original_first
+
+    def test_original_scheduled_at_survives_second_snooze(self, config, max_reps):
+        plan = self._plan(config, max_reps)
+        original_first = plan.sets[0].scheduled_at
+        now = datetime(2026, 5, 13, 8, 0, tzinfo=TZ)
+        plan2 = reschedule_remaining(1, 15, plan, config, now)
+        now2 = plan2.sets[0].scheduled_at
+        plan3 = reschedule_remaining(1, 15, plan2, config, now2)
+        assert plan3.sets[0].original_scheduled_at == original_first
+
 
 TZ_SCHED = ZoneInfo("Europe/Prague")
 

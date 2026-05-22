@@ -115,7 +115,8 @@ def reschedule_remaining(
 ) -> DayPlan:
     """Přeplánuje set from_set_index a všechny následující po snoozu."""
     done_sets = [s for s in current_plan.sets if s.index < from_set_index]
-    n = len([s for s in current_plan.sets if s.index >= from_set_index])
+    snoozed_sets = [s for s in current_plan.sets if s.index >= from_set_index]
+    n = len(snoozed_sets)
 
     if n == 0:
         return current_plan
@@ -154,6 +155,11 @@ def reschedule_remaining(
             scheduled_at=t,
             reps=reps,
             snoozed=True,
+            original_scheduled_at=(
+                snoozed_sets[i].original_scheduled_at or snoozed_sets[i].scheduled_at
+                if i < len(snoozed_sets)
+                else None
+            ),
         )
         for i, t in enumerate(times)
     ]

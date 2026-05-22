@@ -94,12 +94,14 @@ class GTGScheduler:
     def _fire_notification(self, payload: dict) -> None:
         from gtg.models import PlannedSet
 
+        orig = payload.get("original_scheduled_at")
         planned_set = PlannedSet(
             index=payload["index"],
             total=payload["total"],
             scheduled_at=datetime.fromisoformat(payload["scheduled_at"]),
             reps=payload["reps"],
             snoozed=payload.get("snoozed", False),
+            original_scheduled_at=datetime.fromisoformat(orig) if orig else None,
         )
         self.notifier.send_set_notification(planned_set)
 
@@ -117,6 +119,9 @@ class GTGScheduler:
                 "scheduled_at": s.scheduled_at.isoformat(),
                 "reps": s.reps,
                 "snoozed": s.snoozed,
+                "original_scheduled_at": (
+                    s.original_scheduled_at.isoformat() if s.original_scheduled_at else None
+                ),
             }
             self._sched.add_job(
                 self._fire_notification,
