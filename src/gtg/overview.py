@@ -48,6 +48,7 @@ class DayRow:
     reps_label: str = ""
     reps_tooltip: str = ""
     next_set_index: int | None = None
+    past_set_index: int | None = None
 
 
 # ── Čistá logika ───────────────────────────────────────────────────────────────
@@ -118,6 +119,12 @@ def _day_today(
         (ps.index for ps in plan.sets if ps.index not in done_by_idx and ps.scheduled_at > now),
         None,
     )
+    past_candidates = [
+        ps for ps in plan.sets if ps.index not in done_by_idx and ps.scheduled_at <= now
+    ]
+    past_idx = (
+        max(past_candidates, key=lambda ps: ps.scheduled_at).index if past_candidates else None
+    )
 
     sets = []
     for ps in plan.sets:
@@ -140,6 +147,7 @@ def _day_today(
         reps_label=_reps_label(reps, ex_ids),
         reps_tooltip=_reps_tooltip(config),
         next_set_index=next_idx,
+        past_set_index=past_idx,
     )
 
 
@@ -241,11 +249,12 @@ def _actions_cell(row: DayRow, snooze_options: list[int]) -> str:
             return f'<button class="act" onclick="{js}">{label}</button>'
         return f'<button class="act" disabled>{label}</button>'
 
+    pi = row.past_set_index
     si = row.next_set_index
-    parts = [btn("Done", f"/callback/done?set={si}", si is not None)]
+    parts = [btn("Done", f"/callback/done?set={pi}", pi is not None)]
     for m in snooze_options:
-        parts.append(btn(f"Snooze {m}", f"/callback/snooze?set={si}&minutes={m}", si is not None))
-    parts.append(btn("Skip day", "/callback/skip"))
+        parts.append(btn(f"Snooze {m}", f"/callback/snooze?set={pi}&minutes={m}", pi is not None))
+    parts.append(btn("Skip day", "/callback/skip", si is not None or pi is not None))
     return '<td class="actions">' + " ".join(parts) + "</td>"
 
 

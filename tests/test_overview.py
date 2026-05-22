@@ -339,6 +339,84 @@ def test_day_today_next_notify_skips_done_sets() -> None:
     assert row.sets[1].next_notify is True  # první nesplněný budoucí
 
 
+def test_day_today_past_set_index_is_latest_past_uncompleted() -> None:
+    # Both sets are in the past (2026-05-13 < today 2026-05-22).
+    # past_set_index must be 2 (the later one), next_set_index must be None.
+    plan = DayPlan(
+        date="2026-05-13",
+        day_type=DayType.MEDIUM,
+        sets=[
+            PlannedSet(
+                index=1,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+        ],
+    )
+    state = make_state(plan=plan)
+    row = _day_today(TODAY, state, make_config(), TZ, [])
+    assert row.past_set_index == 2
+    assert row.next_set_index is None
+
+
+def test_day_today_past_set_index_none_when_all_future() -> None:
+    plan = DayPlan(
+        date="2099-06-01",
+        day_type=DayType.MEDIUM,
+        sets=[
+            PlannedSet(
+                index=1,
+                total=2,
+                scheduled_at=datetime(2099, 6, 1, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=2,
+                scheduled_at=datetime(2099, 6, 1, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+        ],
+    )
+    state = make_state(plan=plan)
+    row = _day_today(date(2099, 6, 1), state, make_config(), TZ, [])
+    assert row.past_set_index is None
+    assert row.next_set_index == 1
+
+
+def test_day_today_past_set_index_skips_completed() -> None:
+    # Set #1 in past and completed, set #2 in past and uncompleted → past_set_index = 2.
+    plan = DayPlan(
+        date="2026-05-13",
+        day_type=DayType.MEDIUM,
+        sets=[
+            PlannedSet(
+                index=1,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 9, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+            PlannedSet(
+                index=2,
+                total=2,
+                scheduled_at=datetime(2026, 5, 13, 11, 0, tzinfo=TZ),
+                reps={"oap": 3, "ols": 2, "pullup": 1},
+            ),
+        ],
+    )
+    state = make_state(plan=plan)
+    hist = [{"set_index": 1, "completed": True}]
+    row = _day_today(TODAY, state, make_config(), TZ, hist)
+    assert row.past_set_index == 2
+
+
 # ── _day_future ────────────────────────────────────────────────────────────────
 
 
